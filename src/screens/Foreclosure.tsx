@@ -22,10 +22,6 @@ const findNumbersAndMakePhoneNumber = (str: string): string => {
   }
 };
 
-const replaceAmpWithAnd = (str: string): string => {
-  return str.replace(/&amp;/g, '&');
-};
-
 const numberToDollarAmountString = (number: number): string => {
   if (isNaN(number)) return '';
 
@@ -160,6 +156,9 @@ type PublicAuctionNotice = {
   committeeName: string;
   committeePhone: string;
   committeeEmail: string;
+
+  // Absolute URL of the property photo embedded on the notice page (if any).
+  propertyImageUrl: string;
 };
 
 type CityInfo = {
@@ -216,76 +215,44 @@ function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
   // --- Original extraction for the dollar amount ---
   const dollarAmountFound = htmlString.match(/\$[0-9,]+(\.[0-9]{2})?/)?.[0] || '';
 
-  // --- New: Parse granular committee information ---
-  // Initialize new committee fields to empty strings.
+  // Parse committee fields we actually render: name (line 0), phone, email.
   let committeeName = '';
-  let committeeOrganization = '';
-  // let committeeStreetAddress = ''
-  let committeeCity = '';
-  let committeeState = '';
-  let committeeZip = '';
   let committeePhone = '';
-  let committeeFax = '';
   let committeeEmail = '';
 
   const committeeElement = doc.getElementById('cphBody_lblCommittee');
-  // Retain original text value for the existing committee field.
   const committeeOriginal = committeeElement ? committeeElement.textContent?.trim() || '' : '';
 
   if (committeeElement) {
-    // Replace <br> tags with newline characters then split into lines.
-    const committeeRaw = committeeElement.innerHTML;
-    const committeeLines = committeeRaw
+    const committeeLines = committeeElement.innerHTML
       .replace(/<br\s*\/?>/gi, '\n')
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
-    // Use a simple heuristic based on your examples:
-    // - Line 0: committee contact name.
-    // - Line 1: may be the literal "Committee" (skip it if exactly "Committee").
-    // - Next available line: organization.
-    // - Next: street address.
-    // - Next: city, state and zip (split using a regex).
     if (committeeLines.length > 0) {
       committeeName = committeeLines[0];
     }
-    let orgIndex = 1;
-    if (committeeLines[1] && committeeLines[1].toLowerCase() === 'committee') {
-      orgIndex = 2;
-    }
-    if (committeeLines.length > orgIndex) {
-      committeeOrganization = committeeLines[orgIndex] || '';
-    }
-    if (committeeLines.length > orgIndex + 1) {
-      // committeeStreetAddress = committeeLines[orgIndex + 1] || ''
-    }
-    if (committeeLines.length > orgIndex + 2) {
-      const cityStateZipLine = committeeLines[orgIndex + 2] || '';
-      // Use regex to capture "City STATE ZIP", e.g., "BRIDGEPORT CT 06606"
-      const cityStateZipRegex = /([\w\s.]+)\s+([A-Z]{2})\s+(\d{5})/;
-
-      const match = cityStateZipLine.match(cityStateZipRegex);
-      if (match) {
-        committeeCity = match[1].trim();
-        committeeState = match[2].trim();
-        committeeZip = match[3].trim();
-      } else {
-        // If no match, use the whole string as the city.
-        committeeCity = cityStateZipLine;
-      }
-    }
-    // Loop through all lines to pick out PHONE, FAX, and EMAIL.
     committeeLines.forEach((line) => {
       if (line.toUpperCase().startsWith('PHONE:')) {
         committeePhone = line.split(':')[1]?.trim() || '';
-      } else if (line.toUpperCase().startsWith('FAX:')) {
-        committeeFax = line.split(':')[1]?.trim() || '';
       } else if (line.toUpperCase().startsWith('EMAIL:')) {
         committeeEmail = line.split(':')[1]?.trim() || '';
       }
     });
   }
+
+  // Property photo embedded on the notice page. The src is relative
+  // ("../ForeclosureUploads/filedpic/…"), resolve against the known notice
+  // path to get an absolute URL the browser can load directly.
+  const imgEl = doc.getElementById('cphBody_Img1') as HTMLImageElement | null;
+  const rawImgSrc = imgEl?.getAttribute('src') || '';
+  const propertyImageUrl = rawImgSrc
+    ? new URL(
+        rawImgSrc,
+        'https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostDetailPublic.aspx',
+      ).toString()
+    : '';
 
   // --- Return the combined auction notice object ---
   return {
@@ -317,6 +284,8 @@ function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
     committeePhone: committeePhone,
 
     committeeEmail: committeeEmail,
+
+    propertyImageUrl: propertyImageUrl,
   };
 }
 
@@ -333,7 +302,7 @@ function capitalizeEachWord(str: string): string {
 }
 
 // Extract posting IDs from city pages
-function extractPostingIds(htmlString: string, cityName: string): string[] {
+function extractPostingIds(htmlString: string): string[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
 
@@ -419,6 +388,19 @@ const Foreclosure = () => {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState<boolean>(false);
   const [selectedAuction, setSelectedAuction] = useState<PublicAuctionNotice | null>(null);
   const [emailCopied, setEmailCopied] = useState<boolean>(false);
+  const [expandedNotices, setExpandedNotices] = useState<Set<string>>(new Set());
+
+  const toggleInSet = (
+    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
+    key: string,
+  ) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const [sortConfig, setSortConfig] = useState<{
     key: string | null;
@@ -498,7 +480,7 @@ const Foreclosure = () => {
           const response = await axios.get(url);
 
           // Extract posting IDs
-          const postingIds = extractPostingIds(response.data, city.name);
+          const postingIds = extractPostingIds(response.data);
           allPostingIds.push({ city: city.name, postingIds });
 
           console.log(`Found ${postingIds.length} postings for ${city.name}`);
@@ -509,7 +491,6 @@ const Foreclosure = () => {
 
       // Step 3: Flatten all posting IDs and prepare for fetching details
       const allPostings: PostingInfo[] = [];
-      let totalPostings = 0;
 
       allPostingIds.forEach(({ city, postingIds }) => {
         postingIds.forEach((postingId) => {
@@ -518,7 +499,6 @@ const Foreclosure = () => {
             city,
             status: 'pending',
           });
-          totalPostings++;
         });
       });
 
@@ -769,8 +749,8 @@ const Foreclosure = () => {
     }
 
     return [...postings].sort((a, b) => {
-      let aValue: any = '';
-      let bValue: any = '';
+      let aValue: string | number = '';
+      let bValue: string | number = '';
 
       // Extract values based on sort key
       if (sortConfig.key === 'status') {
@@ -1044,15 +1024,7 @@ const Foreclosure = () => {
   const generateEmailTemplate = () => {
     if (!selectedAuction) return '';
 
-    const { address, town, saleDate, saleTime, dollarAmountString, docketNumber, committeeName } =
-      selectedAuction;
-
-    // Determine the date and time for a clean version
-    const formattedSaleDate = formatSaleDate({
-      saleDate: saleDate,
-      saleTime: saleTime,
-      showTime: true,
-    });
+    const { address, committeeName } = selectedAuction;
 
     const emailText: string = `EMAIL ADDRESS: ${selectedAuction.committeeEmail}
     
@@ -1440,18 +1412,35 @@ Lela
         {/* Results Table */}
         {!fetchingCities && !fetchingPostings && !fetchingDetails && postings.length > 0 && (
           <div className="mb-8">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-blue-300">Foreclosure Auction Notices</h2>
-              <p className="text-sm text-gray-400">
-                {postings.filter((p) => p.status === 'loaded').length} of {postings.length} details
-                loaded
-              </p>
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 className="text-xl font-semibold text-blue-300">Foreclosure Auction Notices</h2>
+                <p className="text-sm text-gray-400">
+                  {postings.filter((p) => p.status === 'loaded').length} of {postings.length}{' '}
+                  details loaded
+                </p>
+              </div>
+              <a
+                href="https://jud.ct.gov/WebForms/forms/Flat/CV077_FLAT.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-blue-400 hover:text-blue-300"
+                title="Blank Foreclosure Worksheet form (JD-CV-77) from CT Judicial Branch"
+              >
+                Blank Foreclosure Worksheet (JD-CV-77) ↗
+              </a>
             </div>
 
             <div className="overflow-x-auto rounded-lg border border-gray-700">
               <table className="w-full divide-y divide-gray-700">
                 <thead className="bg-gray-800">
                   <tr>
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300"
+                    >
+                      Photo
+                    </th>
                     <th
                       scope="col"
                       onClick={() => requestSort('status')}
@@ -1607,8 +1596,36 @@ Lela
                 </thead>
                 <tbody className="divide-y divide-gray-700 bg-gray-800">
                   {postings.length > 0 ? (
-                    getSortedPostings().map((posting: PostingInfo, index: number) => (
-                      <tr key={`${posting.postingId}-${index}`} className="hover:bg-gray-700">
+                    getSortedPostings().map((posting: PostingInfo, index: number) => {
+                      const docket = posting.auctionNotice?.docketNumber || '';
+                      const noticeUrl = `https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostDetailPublic.aspx?PostingId=${posting.postingId}`;
+                      const noticeOpen = expandedNotices.has(posting.postingId);
+                      return (
+                      <React.Fragment key={`${posting.postingId}-${index}`}>
+                      <tr className="hover:bg-gray-700">
+                        {/* Photo — fixed box per row, image fits without cropping. */}
+                        <td className="w-[160px] px-3 py-2 align-middle">
+                          <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded bg-gray-700">
+                            {posting.auctionNotice?.propertyImageUrl ? (
+                              <a
+                                href={posting.auctionNotice.propertyImageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Open full-size photo"
+                                className="flex h-full w-full items-center justify-center"
+                              >
+                                <img
+                                  src={posting.auctionNotice.propertyImageUrl}
+                                  alt={posting.auctionNotice.address || 'Property'}
+                                  loading="lazy"
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-gray-500">—</span>
+                            )}
+                          </div>
+                        </td>
                         {/* Status */}
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
                           {posting.status === 'loading' ? (
@@ -1798,25 +1815,52 @@ Lela
 
                         {/* Docket Number */}
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          {posting.auctionNotice?.docketNumber || 'N/A'}
+                          {docket || 'N/A'}
                         </td>
 
                         {/* Actions */}
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          <a
-                            href={`https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostDetailPublic.aspx?PostingId=${posting.postingId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-medium text-blue-400 hover:text-blue-300"
+                          <button
+                            type="button"
+                            onClick={() => toggleInSet(setExpandedNotices, posting.postingId)}
+                            className="text-lg font-medium text-blue-400 hover:text-blue-300"
+                            aria-label={noticeOpen ? 'Hide notice' : 'Show notice'}
+                            title={noticeOpen ? 'Hide notice' : 'Show notice'}
                           >
-                            Link
-                          </a>
+                            {noticeOpen ? '▲' : '▼'}
+                          </button>
                         </td>
                       </tr>
-                    ))
+                      {noticeOpen && (
+                        <tr>
+                          <td colSpan={12} className="bg-gray-900 p-0">
+                            <div className="border-t border-gray-700 p-3">
+                              <div className="mb-1 flex items-center justify-between text-xs text-gray-400">
+                                <span>Notice — {posting.postingId}</span>
+                                <a
+                                  href={noticeUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300"
+                                >
+                                  open in new tab ↗
+                                </a>
+                              </div>
+                              <iframe
+                                title={`Notice ${posting.postingId}`}
+                                src={noticeUrl}
+                                className="h-[600px] w-full rounded border border-gray-700 bg-white"
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-400">
+                      <td colSpan={12} className="px-6 py-4 text-center text-gray-400">
                         No data available yet. Select cities and click "Process Selected Cities".
                       </td>
                     </tr>
