@@ -1,0 +1,33 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["react", "@typescript-eslint"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "rules": {
+    "@typescript-eslint/ban-ts-comment": "off", // Allow @ts-ignore and similar comments
+    "@typescript-eslint/no-inferrable-types": "off", // Disable trivial type warning
+    "react/no-unescaped-entities": "off", // Allow unescaped characters in JSX
+    "prettier/prettier": "off" // Disable prettier formatting errors
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  }
+}

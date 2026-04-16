@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Example of a custom font-face if needed */
+@font-face {
+  font-family: 'PixelOperator';
+  src: url('./fonts/pixel_operator/PixelOperator.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.pixel-font {
+  font-family: 'PixelOperator', sans-serif;
+}
+
+/* Scrollbar customization can be done with a plugin or global CSS. */
+/* Example override: */
+::-webkit-scrollbar {
+  width: 5px;
+  background-color: black;
+}
+::-webkit-scrollbar-thumb {
+  /* USE TAILWIND blue-300 */
+  background-color: #90cdf4;
+
+  border-radius: 6px;
+}
+
+/* Body defaults */
+body {
+  @apply m-0 overflow-x-hidden bg-slate-700 text-white;
+  /* @apply m-0 overflow-x-hidden bg-blue-950 text-white; */
+  /* font-family: 'PixelOperator', sans-serif; */
+}
+/*  */
+/* .App wrapper if you want a global container class */
+.App {
+  @apply h-screen w-full overflow-y-scroll;
+}
+
+/* /////////////////////////////////// */
+
+.btn-fancy,
+.btn-fancy,
+.btn-fancy :after,
+.btn-fancy :before,
+.btn-fancy:after,
+.btn-fancy:before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+
+.btn-fancy {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: button;
+  /* background-color: #2563EB; */
+  /* color: #fff; */
+  color: #2563eb;
+  background-color: #fff;
+  background-image: none;
+  cursor: pointer;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Helvetica Neue,
+    Arial,
+    Noto Sans,
+    sans-serif,
+    Apple Color Emoji,
+    Segoe UI Emoji,
+    Segoe UI Symbol,
+    Noto Color Emoji;
+  font-size: 150%;
+  line-height: 1;
+  margin: 0;
+  -webkit-mask-image: -webkit-radial-gradient(#000, #fff);
+  padding: 0;
+  /* border: 1px solid; */
+  border-radius: 999px;
+  display: block;
+  font-weight: 700;
+  overflow: hidden;
+  padding: 0.8rem 3rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.btn-fancy:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.btn-fancy .original {
+  /* TAILWIND BLUE-500  */
+  background: #3b82f6;
+  color: #fff;
+  display: grid;
+  inset: 0;
+  place-content: center;
+  position: absolute;
+  transition: transform 0.2s cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+.btn-fancy:hover:not(:disabled) .original {
+  transform: translateY(100%);
+}
+
+.btn-fancy .letters {
+  display: inline-flex;
+}
+
+.btn-fancy span {
+  opacity: 0;
+  transform: translateY(-15px);
+  transition:
+    transform 0.2s cubic-bezier(0.87, 0, 0.13, 1),
+    opacity 0.2s;
+}
+
+.btn-fancy span:nth-child(2n) {
+  transform: translateY(15px);
+}
+
+.btn-fancy:hover:not(:disabled) span {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(2) {
+  transition-delay: 0.02s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(3) {
+  transition-delay: 0.04s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(4) {
+  transition-delay: 0.06s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(5) {
+  transition-delay: 0.08s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(6) {
+  transition-delay: 0.1s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(7) {
+  transition-delay: 0.12s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(8) {
+  transition-delay: 0.14s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(9) {
+  transition-delay: 0.16s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(10) {
+  transition-delay: 0.18s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(11) {
+  transition-delay: 0.2s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(12) {
+  transition-delay: 0.22s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(13) {
+  transition-delay: 0.24s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(14) {
+  transition-delay: 0.26s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(15) {
+  transition-delay: 0.28s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(16) {
+  transition-delay: 0.3s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(17) {
+  transition-delay: 0.32s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(18) {
+  transition-delay: 0.34s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(19) {
+  transition-delay: 0.36s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(20) {
+  transition-delay: 0.38s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(21) {
+  transition-delay: 0.4s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(22) {
+  transition-delay: 0.42s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(23) {
+  transition-delay: 0.44s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(24) {
+  transition-delay: 0.46s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(25) {
+  transition-delay: 0.48s;
+}
+
+.btn-fancy:hover:not(:disabled) span:nth-child(26) {
+  transition-delay: 0.5s;
+}

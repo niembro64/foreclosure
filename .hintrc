@@ -1,0 +1,31 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "compat-api/css": [
+      "default",
+      {
+        "ignore": [
+          "image-rendering: crisp-edges"
+        ]
+      }
+    ],
+    "no-inline-styles": "off",
+    "axe/name-role-value": "off",
+    "axe/forms": [
+      "default",
+      {
+        "select-name": "off",
+        "label": "off"
+      }
+    ]
+  },
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not and_ff <= 126",
+    "not firefox <= 126",
+    "not firefox <= 127"
+  ]
+}
