@@ -1,8 +1,21 @@
 import { render, screen } from '@testing-library/react';
+import axios from 'axios';
 import App from './App';
 
-test('renders learn react link', () => {
+jest.mock('axios');
+
+test('renders foreclosure data returned by the town-list request', async () => {
+  axios.get.mockResolvedValue({
+    data: `
+      <div id="ctl00_cphBody_Panel1">
+        <a href="PendPostbyTownDetails.aspx?town=Stamford">Stamford</a>
+        <span> (</span><span>2</span><span>)</span><br>
+      </div>
+    `,
+  });
+
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+
+  expect(screen.getByRole('heading', { name: 'Connecticut Foreclosure Data' })).toBeInTheDocument();
+  expect(await screen.findByText('Stamford (2)')).toBeInTheDocument();
 });

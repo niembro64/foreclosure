@@ -174,19 +174,26 @@ type PostingInfo = {
   errorMessage?: string;
 };
 
-function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
+// ASP.NET naming containers may prepend generated segments such as `ctl00_` to
+// server-control IDs. Match the stable suffix so the parser works with either
+// the prefixed or unprefixed markup returned by the judicial site.
+const getElementByStableId = (doc: Document, stableId: string): HTMLElement | null =>
+  doc.getElementById(stableId) ??
+  doc.querySelector<HTMLElement>(`[id$="${stableId}"]`);
+
+export function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
 
   // Helper function to get the trimmed text content by element ID.
   const getText = (id: string): string => {
-    const element = doc.getElementById(id);
+    const element = getElementByStableId(doc, id);
     return element ? (element.textContent?.trim() ?? '') : '';
   };
 
   // --- Retain original logic for extracting the address ---
   let address = '';
-  const headingElement = doc.getElementById('cphBody_lblHeading');
+  const headingElement = getElementByStableId(doc, 'cphBody_lblHeading');
   if (headingElement) {
     const headingHtml = headingElement.innerHTML;
     // Look for "ADDRESS:" followed by optional <br> tags and capture the text
@@ -220,7 +227,7 @@ function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
   let committeePhone = '';
   let committeeEmail = '';
 
-  const committeeElement = doc.getElementById('cphBody_lblCommittee');
+  const committeeElement = getElementByStableId(doc, 'cphBody_lblCommittee');
   const committeeOriginal = committeeElement ? committeeElement.textContent?.trim() || '' : '';
 
   if (committeeElement) {
@@ -245,7 +252,7 @@ function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
   // Property photo embedded on the notice page. The src is relative
   // ("../ForeclosureUploads/filedpic/…"), resolve against the known notice
   // path to get an absolute URL the browser can load directly.
-  const imgEl = doc.getElementById('cphBody_Img1') as HTMLImageElement | null;
+  const imgEl = getElementByStableId(doc, 'cphBody_Img1') as HTMLImageElement | null;
   const rawImgSrc = imgEl?.getAttribute('src') || '';
   const propertyImageUrl = rawImgSrc
     ? new URL(
@@ -302,12 +309,12 @@ function capitalizeEachWord(str: string): string {
 }
 
 // Extract posting IDs from city pages
-function extractPostingIds(htmlString: string): string[] {
+export function extractPostingIds(htmlString: string): string[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
 
   // Get the table that holds the foreclosure sales records
-  const salesTable = doc.getElementById('cphBody_GridView1');
+  const salesTable = getElementByStableId(doc, 'cphBody_GridView1');
   if (!salesTable) {
     return [];
   }
@@ -349,7 +356,7 @@ function extractPostingIds(htmlString: string): string[] {
 }
 
 // Extract city names and counts from the main page
-function extractCityInfo(htmlString: string): CityInfo[] {
+export function extractCityInfo(htmlString: string): CityInfo[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, 'text/html');
 
@@ -359,16 +366,29 @@ function extractCityInfo(htmlString: string): CityInfo[] {
 
   const cities: CityInfo[] = [];
 
-  // Iterate over the city links to extract the name and the count.
-  // Current DOM is a GridView table: each row has <td><a>Name</a></td><td><span id="cphBody_GridView1_lblTownCount_N">count</span></td>.
+  // Support both known layouts: the older GridView rows with an identified
+  // count span and the current flat list whose count is split across anonymous
+  // sibling spans immediately following each town link.
   cityLinks.forEach((link) => {
     const name = link.textContent?.trim() || '';
 
     const row = link.closest('tr');
     const countSpan = row?.querySelector("span[id*='lblTownCount']");
-    const count = parseInt(countSpan?.textContent?.trim() || '0', 10);
 
-    cities.push({ name, count });
+    let countText = countSpan?.textContent || '';
+    if (!countText) {
+      let sibling = link.nextSibling;
+      while (sibling && sibling.nodeName !== 'BR' && sibling.nodeName !== 'A') {
+        countText += sibling.textContent || '';
+        sibling = sibling.nextSibling;
+      }
+    }
+
+    const count = parseInt(countText.match(/\d+/)?.[0] || '0', 10);
+
+    if (name) {
+      cities.push({ name, count });
+    }
   });
 
   return cities;
