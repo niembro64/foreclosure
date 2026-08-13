@@ -4,7 +4,8 @@ import App from './App';
 
 jest.mock('axios');
 
-test('renders foreclosure data returned by the town-list request', async () => {
+beforeEach(() => {
+  window.location.hash = '';
   axios.get.mockResolvedValue({
     data: `
       <div id="ctl00_cphBody_Panel1">
@@ -13,14 +14,24 @@ test('renders foreclosure data returned by the town-list request', async () => {
       </div>
     `,
   });
+});
 
+test('opens New Jersey by default and allows switching to Connecticut', async () => {
+  render(<App />);
+
+  expect(screen.getByRole('heading', { name: 'Foreclosure Opportunity Monitor' })).toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Turn the CORS extension OFF for New Jersey');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Connecticut' }));
+  expect(screen.getByRole('heading', { name: 'Connecticut Foreclosure Data' })).toBeInTheDocument();
+  expect(await screen.findByText('Stamford (2)')).toBeInTheDocument();
+  expect(screen.getByLabelText('Approximate distance from Bronxville')).toHaveValue(25);
+});
+
+test('preserves the explicit Connecticut hash link', async () => {
+  window.location.hash = '#connecticut';
   render(<App />);
 
   expect(screen.getByRole('heading', { name: 'Connecticut Foreclosure Data' })).toBeInTheDocument();
   expect(await screen.findByText('Stamford (2)')).toBeInTheDocument();
-  expect(screen.getByLabelText('Approximate distance from Bronxville')).toHaveValue(25);
-
-  fireEvent.click(screen.getByRole('button', { name: 'New Jersey' }));
-  expect(screen.getByRole('heading', { name: 'Foreclosure Opportunity Monitor' })).toBeInTheDocument();
-  expect(screen.getByRole('alert')).toHaveTextContent('Turn the CORS extension OFF for New Jersey');
 });

@@ -6,7 +6,7 @@ import './App.scss';
 type AppView = 'connecticut' | 'new-jersey';
 
 const viewFromHash = (): AppView =>
-  window.location.hash.toLowerCase() === '#new-jersey' ? 'new-jersey' : 'connecticut';
+  window.location.hash.toLowerCase() === '#connecticut' ? 'connecticut' : 'new-jersey';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(viewFromHash);
