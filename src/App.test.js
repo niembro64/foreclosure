@@ -20,7 +20,7 @@ test('opens New Jersey by default and allows switching to Connecticut', async ()
   render(<App />);
 
   expect(screen.getByRole('heading', { name: 'Foreclosure Opportunity Monitor' })).toBeInTheDocument();
-  expect(screen.getByRole('alert')).toHaveTextContent('Turn the CORS extension OFF for New Jersey');
+  expect(screen.queryByText(/Turn the CORS extension OFF for New Jersey/i)).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Connecticut' }));
   expect(screen.getByRole('heading', { name: 'Connecticut Foreclosure Data' })).toBeInTheDocument();

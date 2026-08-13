@@ -32,9 +32,8 @@ it. `npm run serve` provides the production bridge and serves the compiled app.
 The Cloudflare Pages deployment equivalent lives in `functions/api/civilview.ts`.
 All implementations proxy only the four configured county IDs and numeric
 property IDs while maintaining CivilView's county-specific ASP.NET sessions.
-Turn the CORS extension **off** for New Jersey because it can rewrite the
-same-origin bridge response. CivilView detail enrichment requires the bridge;
-the direct Details action is available as a manual fallback.
+CivilView detail enrichment requires the bridge; the direct Details action is
+available as a manual fallback.
 
 ## Production server
 

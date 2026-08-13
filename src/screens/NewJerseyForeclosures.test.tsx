@@ -75,7 +75,7 @@ describe('New Jersey table sorting', () => {
 });
 
 describe('New Jersey table controls', () => {
-  test('shows the CORS warning, applies the 25-mile default, and renders centered sortable statuses', async () => {
+  test('applies the 25-mile default and renders centered sortable statuses', async () => {
     (axios.get as jest.Mock).mockImplementation((_url, config) => {
       if (config?.params?.propertyId) {
         return Promise.resolve({
@@ -109,7 +109,7 @@ describe('New Jersey table controls', () => {
 
     render(<NewJerseyForeclosures />);
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Turn the CORS extension OFF for New Jersey');
+    expect(screen.queryByText(/Turn the CORS extension OFF for New Jersey/i)).not.toBeInTheDocument();
 
     const countyCheckboxes = screen.getAllByRole('checkbox');
     fireEvent.click(countyCheckboxes[0]);

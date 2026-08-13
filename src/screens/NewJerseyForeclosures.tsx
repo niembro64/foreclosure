@@ -327,7 +327,7 @@ const NewJerseyForeclosures: React.FC = () => {
         }
       } catch (error) {
         loadErrors.push(
-          `${county.name}: the CivilView bridge failed. Turn the CORS extension off and confirm ${CIVIL_VIEW_PROXY_URL} is available.`
+          `${county.name}: the CivilView bridge failed. Confirm ${CIVIL_VIEW_PROXY_URL} is available.`
         );
       }
 
@@ -485,27 +485,6 @@ const NewJerseyForeclosures: React.FC = () => {
           </div>
         </header>
 
-        <section
-          role="alert"
-          className="mb-6 rounded-xl border-2 border-amber-500 bg-amber-950/70 p-4 text-amber-100 shadow-lg shadow-amber-950/20"
-        >
-          <div className="flex items-start gap-3">
-            <span aria-hidden="true" className="text-2xl leading-none">
-              ⚠
-            </span>
-            <div>
-              <h2 className="text-base font-bold uppercase tracking-wide">
-                Turn the CORS extension OFF for New Jersey
-              </h2>
-              <p className="mt-1 text-sm text-amber-200">
-                New Jersey detail pages use the app&apos;s same-origin session bridge. A CORS extension can rewrite that
-                response and prevent upset prices from loading. Connecticut is the reverse: turn the extension back ON
-                before using the Connecticut screen.
-              </p>
-            </div>
-          </div>
-        </section>
-
         <section className="mb-6 rounded-xl border border-gray-700 bg-gray-800 p-5">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -571,8 +550,8 @@ const NewJerseyForeclosures: React.FC = () => {
 
           <div className="mt-4 rounded-lg border border-gray-600 bg-gray-900/70 p-3 text-xs text-gray-300">
             CivilView detail enrichment requires the same-origin bridge. If upset prices show “detail blocked,” confirm
-            the CORS extension is off and restart the local dev server after updating. The Details action remains
-            available as a manual fallback.
+            the bridge is available and restart the local dev server after updating. The Details action remains available
+            as a manual fallback.
           </div>
         </section>
 
