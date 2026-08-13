@@ -25,13 +25,16 @@ CORS-disabling extension (e.g.
 [Allow CORS](https://chromewebstore.google.com/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf))
 and toggle it on before using Connecticut data.
 
-The New Jersey workflow first uses the narrowly scoped Cloudflare Pages Function
-at `/api/civilview`. It proxies only the four configured county IDs and numeric
-property IDs and maintains CivilView's county-specific ASP.NET sessions with
-HTTP-only cookies. On static hosts without function support, New Jersey falls
-back to direct browser requests using the CORS extension. When a detail request
-is blocked, the app retains the county listing and provides a session-aware
-direct-detail action.
+The New Jersey workflow first uses the narrowly scoped same-origin bridge at
+`/api/civilview`. `npm start` automatically installs the local bridge through
+`src/setupProxy.js`; restart the dev server after pulling changes so CRA loads
+it. The Cloudflare Pages deployment equivalent lives in
+`functions/api/civilview.ts`. Both proxy only the four configured county IDs and
+numeric property IDs while maintaining CivilView's county-specific ASP.NET
+sessions. On static hosts without backend support, New Jersey falls back to
+direct browser requests through the CORS extension for listing data only.
+CivilView detail enrichment requires the bridge; the direct Details action is
+available as a manual fallback.
 
 ## Data-source boundaries
 

@@ -56,7 +56,7 @@ const loadCivilViewListingPage = async (
       return { html: proxyResponse.data, useProxy: true };
     }
   } catch (proxyError) {
-    // A static deployment may not provide the optional Pages Function.
+    // A static deployment may not provide the same-origin bridge.
   }
 
   try {
@@ -171,7 +171,7 @@ const NewJerseyForeclosures: React.FC = () => {
                 return {
                   ...record,
                   detailStatus: 'error',
-                  errorMessage: 'Detail session blocked. Allow CivilView cookies and credentialed CORS requests.',
+                  errorMessage: 'Detail session blocked because the same-origin CivilView bridge was unavailable.',
                 };
               }
             })
@@ -402,9 +402,9 @@ const NewJerseyForeclosures: React.FC = () => {
           </div>
 
           <div className="mt-4 rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-200">
-            The deployed app uses a same-origin CivilView bridge when the host supports it. The CORS extension is the
-            automatic fallback. If upset prices show “detail blocked,” use the session-aware Details action; listing
-            rows and CSV export remain available either way.
+            The local dev server and supported deployments use a same-origin CivilView bridge for detail sessions. The
+            CORS extension is the listing-only fallback. If upset prices show “detail blocked,” restart the dev server
+            after updating, or use the session-aware Details action.
           </div>
         </section>
 
