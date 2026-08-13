@@ -28,12 +28,38 @@ and toggle it on before using Connecticut data.
 The New Jersey workflow first uses the narrowly scoped same-origin bridge at
 `/api/civilview`. `npm start` automatically installs the local bridge through
 `src/setupProxy.js`; restart the dev server after pulling changes so CRA loads
-it. The Cloudflare Pages deployment equivalent lives in
-`functions/api/civilview.ts`. Both proxy only the four configured county IDs and
-numeric property IDs while maintaining CivilView's county-specific ASP.NET
-sessions. Turn the CORS extension **off** for New Jersey because it can rewrite
-the same-origin bridge response. CivilView detail enrichment requires the
-bridge; the direct Details action is available as a manual fallback.
+it. `npm run serve` provides the production bridge and serves the compiled app.
+The Cloudflare Pages deployment equivalent lives in `functions/api/civilview.ts`.
+All implementations proxy only the four configured county IDs and numeric
+property IDs while maintaining CivilView's county-specific ASP.NET sessions.
+Turn the CORS extension **off** for New Jersey because it can rewrite the
+same-origin bridge response. CivilView detail enrichment requires the bridge;
+the direct Details action is available as a manual fallback.
+
+## Production server
+
+Uploading `build/` to a static web root is not sufficient for New Jersey. The
+compiled files contain browser code only, while CivilView detail pages require a
+server-side ASP.NET session. Build and start the included production server:
+
+```sh
+npm ci
+npm run build
+npm run serve
+```
+
+It listens on `127.0.0.1:3001` by default. Set `FORECLOSURE_HOST` or
+`FORECLOSURE_PORT` to override those values. Route `/api/` from nginx to that
+process using `deploy/nginx-foreclosure.conf.example`; the existing static
+`/foreclosure/` location can remain unchanged. Verify the deployed bridge before
+opening the NJ screen:
+
+```sh
+curl -i https://games.niemo.io/api/health
+curl -I 'https://games.niemo.io/api/civilview?countyId=10'
+```
+
+Both responses must be HTTP 200 and include `X-CivilView-Proxy: 1`.
 
 ## Distance estimates
 
@@ -58,7 +84,8 @@ links without copying third-party valuation content.
 
 ```
 npm start       # dev server — opens at http://localhost:3000/foreclosure
-npm run build   # production build in ./build (hosted at /foreclosure/)
+npm run build   # compile the production app into ./build
+npm run serve   # serve ./build plus the NJ bridge on 127.0.0.1:3001
 npm test        # run tests
 npm run typecheck
 npm run format  # prettier
