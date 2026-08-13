@@ -1,6 +1,6 @@
 # The existing /foreclosure/ static-file location can remain unchanged. The NJ
 # workflow additionally needs this API location routed to `npm run serve`.
-location /api/ {
+location ^~ /api/ {
     proxy_pass http://127.0.0.1:3001;
     proxy_http_version 1.1;
     proxy_set_header Host $host;

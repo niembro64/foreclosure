@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    server_name games.niemo.io;
+
+    # Redirect root to /space/
+    location = / {
+        return 301 /space/;
+    }
+
+    # The NJ foreclosure bridge must win over the generic game-folder regex.
+    location ^~ /api/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 45s;
+    }
+
+    # Redirect any request without trailing slash (e.g. /tanks) to with trailing slash (e.g. /tanks/)
+    location ~ ^/([^/]+)$ {
+        return 301 $uri/;
+    }
+
+    # Serve game folders dynamically
+    location ~ ^/([^/]+)/ {
+        root /var/www/games.niemo.io;
+        index index.html;
+        try_files $uri $uri/ /$1/index.html;
+    }
+}
