@@ -26,8 +26,11 @@ const App: React.FC = () => {
     <div className="App min-h-screen bg-gray-900">
       <nav className="sticky top-0 z-50 border-b border-gray-700 bg-gray-950/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-[1800px] flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <a href="https://games.niemo.io" className="self-start font-semibold text-blue-300 hover:text-blue-200">
-            games.niemo.io
+          <a
+            href="https://niemo.io"
+            className="self-start rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600"
+          >
+            niemo.io
           </a>
           <div className="grid w-full grid-cols-2 rounded-lg border border-gray-700 bg-gray-900 p-1 sm:flex sm:w-auto">
             <button

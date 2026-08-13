@@ -19,6 +19,8 @@ beforeEach(() => {
 test('opens New Jersey by default and allows switching to Connecticut', async () => {
   render(<App />);
 
+  expect(screen.getByRole('link', { name: 'niemo.io' })).toHaveAttribute('href', 'https://niemo.io');
+  expect(screen.queryByText('games.niemo.io')).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'New Jersey Foreclosure Data' })).toBeInTheDocument();
   expect(screen.queryByText(/Turn the CORS extension OFF for New Jersey/i)).not.toBeInTheDocument();
 
