@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import axios from 'axios';
 import App from './App';
 
@@ -18,4 +18,7 @@ test('renders foreclosure data returned by the town-list request', async () => {
 
   expect(screen.getByRole('heading', { name: 'Connecticut Foreclosure Data' })).toBeInTheDocument();
   expect(await screen.findByText('Stamford (2)')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'New Jersey' }));
+  expect(screen.getByRole('heading', { name: 'Foreclosure Opportunity Monitor' })).toBeInTheDocument();
 });
