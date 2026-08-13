@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { DEFAULT_DISTANCE_MILES, getConnecticutDistance } from '../data/bronxvilleDistances';
 
 const findNumbersAndMakePhoneNumber = (str: string): string => {
   let numbersString = '';
@@ -33,93 +34,6 @@ const numberToDollarAmountString = (number: number): string => {
   });
   return formattedNumber;
 };
-
-type CityDistanceObject = {
-  city: string;
-  distanceMiles: number;
-};
-
-const citiesByDistance: CityDistanceObject[] = [
-  { city: 'Greenwich', distanceMiles: 0.0 },
-  { city: 'Stamford', distanceMiles: 5.04 },
-  { city: 'New Canaan', distanceMiles: 10.84 },
-  { city: 'Norwalk', distanceMiles: 13.11 },
-  { city: 'Wilton', distanceMiles: 15.33 },
-  { city: 'Bridgeport', distanceMiles: 18.53 },
-  { city: 'Fairfield', distanceMiles: 18.68 },
-  { city: 'Trumbull', distanceMiles: 20.18 },
-  { city: 'Redding', distanceMiles: 21.04 },
-  { city: 'Monroe', distanceMiles: 21.22 },
-  { city: 'Westport', distanceMiles: 21.29 },
-  { city: 'Bethel', distanceMiles: 21.53 },
-  { city: 'Danbury', distanceMiles: 21.92 },
-  { city: 'Milford', distanceMiles: 23.87 },
-  { city: 'Derby', distanceMiles: 25.39 },
-  { city: 'Seymour', distanceMiles: 26.08 },
-  { city: 'Bridgewater', distanceMiles: 26.68 },
-  { city: 'Southbury', distanceMiles: 27.3 },
-  { city: 'Middlebury', distanceMiles: 28.09 },
-  { city: 'Waterbury', distanceMiles: 28.6 },
-  { city: 'Newtown', distanceMiles: 29.1 },
-  { city: 'Ansonia', distanceMiles: 29.5 },
-  { city: 'Stratford', distanceMiles: 30.0 },
-  { city: 'New Haven', distanceMiles: 30.6 },
-  { city: 'Hamden', distanceMiles: 31.5 },
-  { city: 'Naugatuck', distanceMiles: 31.7 },
-  { city: 'Cheshire', distanceMiles: 32.1 },
-  { city: 'Wallingford', distanceMiles: 34.1 },
-  { city: 'Watertown', distanceMiles: 34.6 },
-  { city: 'Southington', distanceMiles: 35.7 },
-  { city: 'Meriden', distanceMiles: 35.9 },
-  { city: 'Wolcott', distanceMiles: 36.0 },
-  { city: 'New Britain', distanceMiles: 37.5 },
-  { city: 'Plymouth', distanceMiles: 38.3 },
-  { city: 'Middletown', distanceMiles: 38.7 },
-  { city: 'Bristol', distanceMiles: 39.1 },
-  { city: 'Plainville', distanceMiles: 39.4 },
-  { city: 'Berlin', distanceMiles: 39.8 },
-  { city: 'Durham', distanceMiles: 40.3 },
-  { city: 'Farmington', distanceMiles: 40.5 },
-  { city: 'Newington', distanceMiles: 41.3 },
-  { city: 'Wethersfield', distanceMiles: 42.0 },
-  { city: 'Rocky Hill', distanceMiles: 42.3 },
-  { city: 'West Hartford', distanceMiles: 42.6 },
-  { city: 'Hartford', distanceMiles: 43.0 },
-  { city: 'Manchester', distanceMiles: 43.6 },
-  { city: 'West Haven', distanceMiles: 43.7 },
-  { city: 'East Hartford', distanceMiles: 43.8 },
-  { city: 'Canton', distanceMiles: 44.0 },
-  { city: 'Burlington', distanceMiles: 44.2 },
-  { city: 'Glastonbury', distanceMiles: 44.3 },
-  { city: 'New Hartford', distanceMiles: 44.8 },
-  { city: 'Simsbury', distanceMiles: 45.3 },
-  { city: 'Avon', distanceMiles: 45.6 },
-  { city: 'Hebron', distanceMiles: 46.5 },
-  { city: 'East Hampton', distanceMiles: 46.8 },
-  { city: 'Bloomfield', distanceMiles: 47.1 },
-  { city: 'Colchester', distanceMiles: 48.2 },
-  { city: 'Montville', distanceMiles: 50.2 },
-  { city: 'Lebanon', distanceMiles: 51.3 },
-  { city: 'Windham', distanceMiles: 52.1 },
-  { city: 'East Haddam', distanceMiles: 52.5 },
-  { city: 'Bozrah', distanceMiles: 53.4 },
-  { city: 'Mansfield', distanceMiles: 53.5 },
-  { city: 'Norwich', distanceMiles: 54.0 },
-  { city: 'Waterford', distanceMiles: 55.3 },
-  { city: 'New London', distanceMiles: 56.6 },
-  { city: 'Plainfield', distanceMiles: 59.1 },
-  { city: 'Woodstock', distanceMiles: 60.3 },
-  { city: 'Thompson', distanceMiles: 61.7 },
-  { city: 'Sprague', distanceMiles: 62.1 },
-  { city: 'Stafford', distanceMiles: 63.3 },
-  { city: 'Suffield', distanceMiles: 63.9 },
-  { city: 'Ellington', distanceMiles: 64.3 },
-  { city: 'East Windsor', distanceMiles: 64.6 },
-  { city: 'South Windsor', distanceMiles: 65.1 },
-  { city: 'Windsor', distanceMiles: 66.0 },
-  { city: 'Windsor Locks', distanceMiles: 67.3 },
-  { city: 'Enfield', distanceMiles: 68.5 },
-];
 
 // Define types for the data we'll work with
 type PublicAuctionNotice = {
@@ -178,8 +92,7 @@ type PostingInfo = {
 // server-control IDs. Match the stable suffix so the parser works with either
 // the prefixed or unprefixed markup returned by the judicial site.
 const getElementByStableId = (doc: Document, stableId: string): HTMLElement | null =>
-  doc.getElementById(stableId) ??
-  doc.querySelector<HTMLElement>(`[id$="${stableId}"]`);
+  doc.getElementById(stableId) ?? doc.querySelector<HTMLElement>(`[id$="${stableId}"]`);
 
 export function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotice {
   const parser = new DOMParser();
@@ -255,10 +168,7 @@ export function parsePublicAuctionNotice(htmlString: string): PublicAuctionNotic
   const imgEl = getElementByStableId(doc, 'cphBody_Img1') as HTMLImageElement | null;
   const rawImgSrc = imgEl?.getAttribute('src') || '';
   const propertyImageUrl = rawImgSrc
-    ? new URL(
-        rawImgSrc,
-        'https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostDetailPublic.aspx',
-      ).toString()
+    ? new URL(rawImgSrc, 'https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostDetailPublic.aspx').toString()
     : '';
 
   // --- Return the combined auction notice object ---
@@ -404,16 +314,13 @@ const Foreclosure = () => {
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState<string>('');
-  const [distanceFromGreenwich, setDistanceFromGreenwich] = useState<number>(20);
+  const [distanceFromBronxville, setDistanceFromBronxville] = useState<number>(DEFAULT_DISTANCE_MILES);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState<boolean>(false);
   const [selectedAuction, setSelectedAuction] = useState<PublicAuctionNotice | null>(null);
   const [emailCopied, setEmailCopied] = useState<boolean>(false);
   const [expandedNotices, setExpandedNotices] = useState<Set<string>>(new Set());
 
-  const toggleInSet = (
-    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
-    key: string,
-  ) => {
+  const toggleInSet = (setter: React.Dispatch<React.SetStateAction<Set<string>>>, key: string) => {
     setter((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -441,9 +348,7 @@ const Foreclosure = () => {
       setTimestamp(new Date().toLocaleString());
 
       // Fetch the main page that lists all cities
-      const response = await axios.get(
-        'https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostbyTownList.aspx'
-      );
+      const response = await axios.get('https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostbyTownList.aspx');
 
       // Extract city information
       const cities = extractCityInfo(response.data);
@@ -545,9 +450,7 @@ const Foreclosure = () => {
           const batchEnd = Math.min(batchStart + batchSize, allPostings.length);
           const batch = allPostings.slice(batchStart, batchEnd);
 
-          console.log(
-            `Processing batch ${batchIndex + 1}/${totalBatches}, items ${batchStart + 1}-${batchEnd}`
-          );
+          console.log(`Processing batch ${batchIndex + 1}/${totalBatches}, items ${batchStart + 1}-${batchEnd}`);
 
           // Mark items in this batch as loading
           setPostings((prevPostings) => {
@@ -667,16 +570,10 @@ const Foreclosure = () => {
     setSelectedCities(cityList.map((city) => city.name));
   };
 
-  // Select cities within distance from Greenwich
+  // Select cities within the approximate straight-line distance from Bronxville.
   const selectCitiesByDistance = (distance: number) => {
-    // Find cities that are within the specified distance
-    const citiesWithinDistance = citiesByDistance
-      .filter((city) => city.distanceMiles <= distance)
-      .map((city) => city.city);
-
-    // Filter cityList to only include these cities (because some cities in distance list might not appear in the actual data)
     const availableCitiesWithinDistance = cityList
-      .filter((city) => citiesWithinDistance.includes(city.name))
+      .filter((city) => (getConnecticutDistance(city.name)?.miles ?? Number.POSITIVE_INFINITY) <= distance)
       .map((city) => city.name);
 
     setSelectedCities(availableCitiesWithinDistance);
@@ -685,9 +582,9 @@ const Foreclosure = () => {
   // Update city selection when distance changes
   useEffect(() => {
     if (cityList.length > 0) {
-      selectCitiesByDistance(distanceFromGreenwich);
+      selectCitiesByDistance(distanceFromBronxville);
     }
-  }, [distanceFromGreenwich, cityList]);
+  }, [distanceFromBronxville, cityList]);
 
   // Clear city selection
   const clearCitySelection = () => {
@@ -700,11 +597,7 @@ const Foreclosure = () => {
   }, []);
 
   // Format sale date to YYYY-MM-DD HH:MM format
-  const formatSaleDate = (params: {
-    saleDate?: string;
-    saleTime?: string;
-    showTime: boolean;
-  }): string => {
+  const formatSaleDate = (params: { saleDate?: string; saleTime?: string; showTime: boolean }): string => {
     // Check if saleDate is provided
     const { saleDate, showTime, saleTime } = params;
 
@@ -825,12 +718,8 @@ const Foreclosure = () => {
       } else if (sortConfig.key === 'distance') {
         const cityA = a.auctionNotice?.town || a.city || '';
         const cityB = b.auctionNotice?.town || b.city || '';
-        const distanceA = Number(
-          citiesByDistance.find((c) => c.city === cityA)?.distanceMiles ?? 999
-        );
-        const distanceB = Number(
-          citiesByDistance.find((c) => c.city === cityB)?.distanceMiles ?? 999
-        );
+        const distanceA = getConnecticutDistance(cityA)?.miles ?? Number.POSITIVE_INFINITY;
+        const distanceB = getConnecticutDistance(cityB)?.miles ?? Number.POSITIVE_INFINITY;
         aValue = distanceA;
         bValue = distanceB;
       }
@@ -916,12 +805,8 @@ const Foreclosure = () => {
     const sortedPostings = [...loadedPostings].sort((a, b) => {
       const cityA = a.auctionNotice?.town || a.city || '';
       const cityB = b.auctionNotice?.town || b.city || '';
-      const distanceA = Number(
-        citiesByDistance.find((c) => c.city === cityA)?.distanceMiles ?? 999
-      );
-      const distanceB = Number(
-        citiesByDistance.find((c) => c.city === cityB)?.distanceMiles ?? 999
-      );
+      const distanceA = getConnecticutDistance(cityA)?.miles ?? Number.POSITIVE_INFINITY;
+      const distanceB = getConnecticutDistance(cityB)?.miles ?? Number.POSITIVE_INFINITY;
       return distanceA - distanceB;
     });
 
@@ -929,7 +814,7 @@ const Foreclosure = () => {
     const headers = [
       'Status',
       'City',
-      'Distance',
+      'Approx. Distance from Bronxville (mi)',
       'Deposit',
       'Address',
       'Committee Name',
@@ -941,14 +826,11 @@ const Foreclosure = () => {
 
     // Convert postings to CSV rows
     const rows = sortedPostings.map((posting) => {
-      const status = posting.auctionNotice?.status?.toLowerCase().includes('cancel')
-        ? 'Cancelled'
-        : 'Active';
+      const status = posting.auctionNotice?.status?.toLowerCase().includes('cancel') ? 'Cancelled' : 'Active';
 
       const town = posting.auctionNotice?.town || posting.city || '';
 
-      const distance =
-        citiesByDistance.find((c) => c.city === town)?.distanceMiles?.toString() || 'N/A';
+      const distance = getConnecticutDistance(town)?.miles.toString() || 'N/A';
 
       const deposit = numberToDollarAmountString(posting.auctionNotice?.dollarAmountNumber || 0);
 
@@ -956,9 +838,7 @@ const Foreclosure = () => {
 
       const committeeName = posting.auctionNotice?.committeeName || '';
 
-      const committeePhone = findNumbersAndMakePhoneNumber(
-        posting.auctionNotice?.committeePhone || ''
-      );
+      const committeePhone = findNumbersAndMakePhoneNumber(posting.auctionNotice?.committeePhone || '');
 
       const committeeEmail = posting.auctionNotice?.committeeEmail || '';
 
@@ -1090,18 +970,13 @@ Lela
   return (
     <div className="h-auto bg-gray-900 p-4 text-gray-100">
       <div className="mb-4 p-4">
-        <a
-          href="https://niemo.io"
-          className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-600"
-        >
+        <a href="https://niemo.io" className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-600">
           niemo.io
         </a>
       </div>
       <div className="w-full py-8">
         <header className="mb-6 text-center">
-          <h1 className="mb-2 mb-8 text-3xl font-bold text-blue-300">
-            Connecticut Foreclosure Data
-          </h1>
+          <h1 className="mb-2 mb-8 text-3xl font-bold text-blue-300">Connecticut Foreclosure Data</h1>
 
           <a
             href="https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostbyTownList.aspx"
@@ -1138,9 +1013,7 @@ Lela
             {/* Show CORS extension help if error mentions CORS */}
             {error.toLowerCase().includes('cors') && (
               <div className="mt-4 rounded-lg border border-red-700 bg-red-950 p-4">
-                <h4 className="mb-3 font-semibold text-red-100">
-                  How to Install the CORS Extension:
-                </h4>
+                <h4 className="mb-3 font-semibold text-red-100">How to Install the CORS Extension:</h4>
 
                 <ol className="mb-4 space-y-2 text-sm">
                   <li className="flex items-start">
@@ -1163,10 +1036,7 @@ Lela
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2 font-bold">3.</span>
-                    <span>
-                      After installation, click the extension icon in your browser toolbar and toggle
-                      it ON
-                    </span>
+                    <span>After installation, click the extension icon in your browser toolbar and toggle it ON</span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2 font-bold">4.</span>
@@ -1201,9 +1071,8 @@ Lela
                 <div className="mt-4 rounded bg-yellow-900/30 p-3 text-xs text-yellow-200">
                   <p className="font-semibold">Note:</p>
                   <p>
-                    This extension is needed because the foreclosure website doesn't allow direct
-                    access from other websites. The CORS extension temporarily removes this
-                    restriction for your browser only.
+                    This extension is needed because the foreclosure website doesn't allow direct access from other
+                    websites. The CORS extension temporarily removes this restriction for your browser only.
                   </p>
                 </div>
               </div>
@@ -1215,20 +1084,20 @@ Lela
         <div className="mb-6 rounded-lg bg-gray-800 p-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <label className="font-medium text-gray-300">Distance from Greenwich (mi):</label>
+              <label className="font-medium text-gray-300">Approx. distance from Bronxville (mi):</label>
               <input
-                aria-label="Distance from Greenwich"
+                aria-label="Approximate distance from Bronxville"
                 type="number"
                 min="0"
                 max="100"
-                value={distanceFromGreenwich}
-                onChange={(e) => setDistanceFromGreenwich(Number(e.target.value))}
+                value={distanceFromBronxville}
+                onChange={(e) => setDistanceFromBronxville(Math.max(0, Number(e.target.value)))}
                 className="w-20 rounded border border-gray-600 bg-gray-700 p-2 text-white"
               />
             </div>
             <div>
               <span className="text-sm text-gray-400">
-                ({selectedCities.length} cities selected)
+                ({selectedCities.length} cities selected using straight-line town-center estimates)
               </span>
             </div>
           </div>
@@ -1268,9 +1137,7 @@ Lela
                 <button
                   onClick={downloadTableAsCSV}
                   className="flex items-center rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
-                  disabled={
-                    fetchingDetails || postings.filter((p) => p.status === 'loaded').length === 0
-                  }
+                  disabled={fetchingDetails || postings.filter((p) => p.status === 'loaded').length === 0}
                   title="Download table data as CSV file"
                 >
                   <svg
@@ -1327,12 +1194,9 @@ Lela
         {/* City Selection Section */}
         <div className="mb-8">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold text-blue-300">
-              Connecticut Cities with Foreclosure Data
-            </h2>
+            <h2 className="text-xl font-semibold text-blue-300">Connecticut Cities with Foreclosure Data</h2>
             <p className="text-sm text-gray-400">
-              {cityList.length} cities found - select cities and click "Process" to fetch
-              foreclosure data
+              {cityList.length} cities found - select cities and click "Process" to fetch foreclosure data
             </p>
           </div>
 
@@ -1340,27 +1204,21 @@ Lela
             <button
               onClick={processSelectedCities}
               className="rounded bg-green-600 px-4 py-2 text-white transition hover:bg-green-500"
-              disabled={
-                fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0
-              }
+              disabled={fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0}
             >
               Process Selected Cities ({selectedCities.length})
             </button>
             <button
               onClick={selectAllCities}
               className="rounded bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600"
-              disabled={
-                fetchingCities || fetchingPostings || fetchingDetails || cityList.length === 0
-              }
+              disabled={fetchingCities || fetchingPostings || fetchingDetails || cityList.length === 0}
             >
               Select All Cities
             </button>
             <button
               onClick={clearCitySelection}
               className="rounded bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600"
-              disabled={
-                fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0
-              }
+              disabled={fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0}
             >
               Clear Selection
             </button>
@@ -1385,10 +1243,8 @@ Lela
                       className={`cursor-pointer rounded-lg p-3 transition ${
                         selectedCities.includes(city.name)
                           ? 'bg-blue-700 hover:bg-blue-600'
-                          : citiesByDistance.some(
-                                (c) =>
-                                  c.city === city.name && c.distanceMiles <= distanceFromGreenwich
-                              )
+                          : (getConnecticutDistance(city.name)?.miles ?? Number.POSITIVE_INFINITY) <=
+                              distanceFromBronxville
                             ? 'bg-emerald-900/40 hover:bg-emerald-800/40'
                             : 'bg-gray-700 hover:bg-gray-600'
                       }`}
@@ -1397,10 +1253,8 @@ Lela
                         className={
                           selectedCities.includes(city.name)
                             ? 'text-blue-100'
-                            : citiesByDistance.some(
-                                  (c) =>
-                                    c.city === city.name && c.distanceMiles <= distanceFromGreenwich
-                                )
+                            : (getConnecticutDistance(city.name)?.miles ?? Number.POSITIVE_INFINITY) <=
+                                distanceFromBronxville
                               ? 'text-emerald-300'
                               : 'text-gray-100'
                         }
@@ -1436,8 +1290,7 @@ Lela
               <div>
                 <h2 className="text-xl font-semibold text-blue-300">Foreclosure Auction Notices</h2>
                 <p className="text-sm text-gray-400">
-                  {postings.filter((p) => p.status === 'loaded').length} of {postings.length}{' '}
-                  details loaded
+                  {postings.filter((p) => p.status === 'loaded').length} of {postings.length} details loaded
                 </p>
               </div>
               <a
@@ -1464,13 +1317,13 @@ Lela
                     <th
                       scope="col"
                       onClick={() => requestSort('status')}
-                      className={`cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-150 ${
+                      className={`cursor-pointer px-6 py-3 text-center text-xs font-medium uppercase tracking-wider transition-colors duration-150 ${
                         sortConfig.key === 'status'
                           ? 'bg-blue-800/20 text-blue-200 hover:bg-blue-800/30'
                           : 'text-gray-300 hover:bg-gray-800'
                       }`}
                     >
-                      <div className="group flex items-center">
+                      <div className="group flex items-center justify-center">
                         <span>Status</span>
                         {getSortIndicator('status')}
                       </div>
@@ -1499,7 +1352,7 @@ Lela
                       }`}
                     >
                       <div className="group flex items-center">
-                        <span>Distance</span>
+                        <span>Approx. distance</span>
                         {getSortIndicator('distance')}
                       </div>
                     </th>
@@ -1621,261 +1474,253 @@ Lela
                       const noticeUrl = `https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostDetailPublic.aspx?PostingId=${posting.postingId}`;
                       const noticeOpen = expandedNotices.has(posting.postingId);
                       return (
-                      <React.Fragment key={`${posting.postingId}-${index}`}>
-                      <tr className="hover:bg-gray-700">
-                        {/* Photo — fixed box per row, image fits without cropping. */}
-                        <td className="w-[160px] px-3 py-2 align-middle">
-                          <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded bg-gray-700">
-                            {posting.auctionNotice?.propertyImageUrl ? (
-                              <a
-                                href={posting.auctionNotice.propertyImageUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="Open full-size photo"
-                                className="flex h-full w-full items-center justify-center"
-                              >
-                                <img
-                                  src={posting.auctionNotice.propertyImageUrl}
-                                  alt={posting.auctionNotice.address || 'Property'}
-                                  loading="lazy"
-                                  className="max-h-full max-w-full object-contain"
-                                />
-                              </a>
-                            ) : (
-                              <span className="text-xs text-gray-500">—</span>
-                            )}
-                          </div>
-                        </td>
-                        {/* Status */}
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          {posting.status === 'loading' ? (
-                            <span className="inline-flex items-center rounded-full border border-yellow-500 bg-yellow-900/30 px-2.5 py-0.5 text-xs font-medium text-yellow-300 shadow-sm">
-                              <svg
-                                className="mr-1 h-3 w-3 animate-spin text-yellow-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
-                              Loading...
-                            </span>
-                          ) : posting.status === 'loaded' ? (
-                            posting.auctionNotice?.status?.toLowerCase().includes('cancel') ? (
-                              <span className="inline-flex items-center rounded-full border border-orange-500 bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-300 shadow-sm">
-                                <svg
-                                  className="mr-1 h-3 w-3 text-orange-400"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                Cancelled
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center rounded-full border border-green-500 bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-300 shadow-sm">
-                                <svg
-                                  className="mr-1 h-3 w-3 text-green-400"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                Active
-                              </span>
-                            )
-                          ) : posting.status === 'error' ? (
-                            <span className="inline-flex items-center rounded-full border border-red-500 bg-red-900/30 px-2.5 py-0.5 text-xs font-medium text-red-300 shadow-sm">
-                              <svg
-                                className="mr-1 h-3 w-3 text-red-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                              Error
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full border border-blue-500 bg-blue-900/30 px-2.5 py-0.5 text-xs font-medium text-blue-300 shadow-sm">
-                              <svg
-                                className="mr-1 h-3 w-3 text-blue-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              Pending
-                            </span>
-                          )}
-                        </td>
+                        <React.Fragment key={`${posting.postingId}-${index}`}>
+                          <tr className="hover:bg-gray-700">
+                            {/* Photo — fixed box per row, image fits without cropping. */}
+                            <td className="w-[160px] px-3 py-2 align-middle">
+                              <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded bg-gray-700">
+                                {posting.auctionNotice?.propertyImageUrl ? (
+                                  <a
+                                    href={posting.auctionNotice.propertyImageUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Open full-size photo"
+                                    className="flex h-full w-full items-center justify-center"
+                                  >
+                                    <img
+                                      src={posting.auctionNotice.propertyImageUrl}
+                                      alt={posting.auctionNotice.address || 'Property'}
+                                      loading="lazy"
+                                      className="max-h-full max-w-full object-contain"
+                                    />
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-gray-500">—</span>
+                                )}
+                              </div>
+                            </td>
+                            {/* Status */}
+                            <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-gray-300">
+                              {posting.status === 'loading' ? (
+                                <span className="inline-flex items-center justify-center rounded-full border border-yellow-500 bg-yellow-900/30 px-2.5 py-0.5 text-center text-xs font-medium text-yellow-300 shadow-sm">
+                                  <svg
+                                    className="mr-1 h-3 w-3 animate-spin text-yellow-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                  Loading...
+                                </span>
+                              ) : posting.status === 'loaded' ? (
+                                posting.auctionNotice?.status?.toLowerCase().includes('cancel') ? (
+                                  <span className="inline-flex items-center justify-center rounded-full border border-orange-500 bg-orange-900/30 px-2.5 py-0.5 text-center text-xs font-medium text-orange-300 shadow-sm">
+                                    <svg
+                                      className="mr-1 h-3 w-3 text-orange-400"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    Cancelled
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-900/30 px-2.5 py-0.5 text-center text-xs font-medium text-green-300 shadow-sm">
+                                    <svg
+                                      className="mr-1 h-3 w-3 text-green-400"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Active
+                                  </span>
+                                )
+                              ) : posting.status === 'error' ? (
+                                <span className="inline-flex items-center justify-center rounded-full border border-red-500 bg-red-900/30 px-2.5 py-0.5 text-center text-xs font-medium text-red-300 shadow-sm">
+                                  <svg
+                                    className="mr-1 h-3 w-3 text-red-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                  Error
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center justify-center rounded-full border border-blue-500 bg-blue-900/30 px-2.5 py-0.5 text-center text-xs font-medium text-blue-300 shadow-sm">
+                                  <svg
+                                    className="mr-1 h-3 w-3 text-blue-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                  Pending
+                                </span>
+                              )}
+                            </td>
 
-                        {/* City */}
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">
-                          {posting.auctionNotice?.town || posting.city || 'N/A'}
-                        </td>
+                            {/* City */}
+                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">
+                              {posting.auctionNotice?.town || posting.city || 'N/A'}
+                            </td>
 
-                        {/* Distance */}
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          {(() => {
-                            const cityName = posting.auctionNotice?.town || posting.city || '';
-                            const distance = citiesByDistance.find(
-                              (c) => c.city === cityName
-                            )?.distanceMiles;
-                            return distance !== undefined ? `${distance} mi` : 'N/A';
-                          })()}
-                        </td>
+                            {/* Distance */}
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                              {(() => {
+                                const cityName = posting.auctionNotice?.town || posting.city || '';
+                                const distance = getConnecticutDistance(cityName)?.miles;
+                                return distance !== undefined ? `~${distance} mi` : 'N/A';
+                              })()}
+                            </td>
 
-                        {/* Dollar Amount */}
+                            {/* Dollar Amount */}
 
-                        <td className="px-6 py-4 text-sm text-gray-300">
-                          {numberToDollarAmountString(
-                            posting.auctionNotice?.dollarAmountNumber || 0
-                          )}
-                        </td>
+                            <td className="px-6 py-4 text-sm text-gray-300">
+                              {numberToDollarAmountString(posting.auctionNotice?.dollarAmountNumber || 0)}
+                            </td>
 
-                        {/* Address */}
+                            {/* Address */}
 
-                        <td className="px-6 py-4 text-sm text-gray-300">
-                          {posting.auctionNotice?.address || 'N/A'}
-                        </td>
+                            <td className="px-6 py-4 text-sm text-gray-300">
+                              {posting.auctionNotice?.address || 'N/A'}
+                            </td>
 
-                        {/* Committee Name */}
-                        <td className="px-6 py-4 text-sm text-gray-300">
-                          {capitalizeEachWord(posting.auctionNotice?.committeeName || 'N/A')}
-                        </td>
-                        {/* Committee Organization */}
+                            {/* Committee Name */}
+                            <td className="px-6 py-4 text-sm text-gray-300">
+                              {capitalizeEachWord(posting.auctionNotice?.committeeName || 'N/A')}
+                            </td>
+                            {/* Committee Organization */}
 
-                        {/* <td
+                            {/* <td
                               className="px-6 py-4 text-sm text-gray-300"
                             >
                               {posting.auctionNotice?.committeeOrganization ||
                                 'N/A'}
                             </td> */}
-                        {/* Committee Phone */}
+                            {/* Committee Phone */}
 
-                        <td className="px-6 py-4 text-sm text-gray-300">
-                          {findNumbersAndMakePhoneNumber(
-                            posting.auctionNotice?.committeePhone || ''
-                          ) || 'N/A'}
-                        </td>
-                        {/* Committee Email */}
-                        <td className="px-6 py-4 text-sm lowercase text-gray-300">
-                          <div className="flex items-center gap-2">
-                            <span>{posting.auctionNotice?.committeeEmail || 'N/A'}</span>
-                            {posting.auctionNotice?.committeeEmail && (
-                              <button
-                                onClick={() => {
-                                  if (posting.auctionNotice) {
-                                    // Open email compose modal with this auction's details
-                                    setSelectedAuction(posting.auctionNotice);
-                                    setIsEmailModalOpen(true);
-                                  }
-                                }}
-                                className="rounded bg-blue-700 px-2 py-1 text-xs font-medium text-white transition hover:bg-blue-600"
-                                title="Compose email about this property"
-                              >
-                                Email
-                              </button>
-                            )}
-                          </div>
-                        </td>
+                            <td className="px-6 py-4 text-sm text-gray-300">
+                              {findNumbersAndMakePhoneNumber(posting.auctionNotice?.committeePhone || '') || 'N/A'}
+                            </td>
+                            {/* Committee Email */}
+                            <td className="px-6 py-4 text-sm lowercase text-gray-300">
+                              <div className="flex items-center gap-2">
+                                <span>{posting.auctionNotice?.committeeEmail || 'N/A'}</span>
+                                {posting.auctionNotice?.committeeEmail && (
+                                  <button
+                                    onClick={() => {
+                                      if (posting.auctionNotice) {
+                                        // Open email compose modal with this auction's details
+                                        setSelectedAuction(posting.auctionNotice);
+                                        setIsEmailModalOpen(true);
+                                      }
+                                    }}
+                                    className="rounded bg-blue-700 px-2 py-1 text-xs font-medium text-white transition hover:bg-blue-600"
+                                    title="Compose email about this property"
+                                  >
+                                    Email
+                                  </button>
+                                )}
+                              </div>
+                            </td>
 
-                        {/* Case Caption */}
-                        {/* <td
+                            {/* Case Caption */}
+                            {/* <td
                               className="px-6 py-4 text-sm text-gray-300"
                             >
                               {posting.auctionNotice?.caseCaption || 'N/A'}
                             </td> */}
 
-                        {/* Sale Date */}
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          {posting.auctionNotice?.saleDate
-                            ? formatSaleDate({
-                                saleDate: posting.auctionNotice.saleDate,
-                                saleTime: posting.auctionNotice.saleTime,
-                                showTime: false,
-                              })
-                            : 'N/A'}
-                        </td>
+                            {/* Sale Date */}
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                              {posting.auctionNotice?.saleDate
+                                ? formatSaleDate({
+                                    saleDate: posting.auctionNotice.saleDate,
+                                    saleTime: posting.auctionNotice.saleTime,
+                                    showTime: false,
+                                  })
+                                : 'N/A'}
+                            </td>
 
-                        {/* Docket Number */}
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          {docket || 'N/A'}
-                        </td>
+                            {/* Docket Number */}
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{docket || 'N/A'}</td>
 
-                        {/* Actions */}
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                          <button
-                            type="button"
-                            onClick={() => toggleInSet(setExpandedNotices, posting.postingId)}
-                            className="text-lg font-medium text-blue-400 hover:text-blue-300"
-                            aria-label={noticeOpen ? 'Hide notice' : 'Show notice'}
-                            title={noticeOpen ? 'Hide notice' : 'Show notice'}
-                          >
-                            {noticeOpen ? '▲' : '▼'}
-                          </button>
-                        </td>
-                      </tr>
-                      {noticeOpen && (
-                        <tr>
-                          <td colSpan={12} className="bg-gray-900 p-0">
-                            <div className="border-t border-gray-700 p-3">
-                              <div className="mb-1 flex items-center justify-between text-xs text-gray-400">
-                                <span>Notice — {posting.postingId}</span>
-                                <a
-                                  href={noticeUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300"
-                                >
-                                  open in new tab ↗
-                                </a>
-                              </div>
-                              <iframe
-                                title={`Notice ${posting.postingId}`}
-                                src={noticeUrl}
-                                className="h-[600px] w-full rounded border border-gray-700 bg-white"
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      </React.Fragment>
+                            {/* Actions */}
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                              <button
+                                type="button"
+                                onClick={() => toggleInSet(setExpandedNotices, posting.postingId)}
+                                className="text-lg font-medium text-blue-400 hover:text-blue-300"
+                                aria-label={noticeOpen ? 'Hide notice' : 'Show notice'}
+                                title={noticeOpen ? 'Hide notice' : 'Show notice'}
+                              >
+                                {noticeOpen ? '▲' : '▼'}
+                              </button>
+                            </td>
+                          </tr>
+                          {noticeOpen && (
+                            <tr>
+                              <td colSpan={12} className="bg-gray-900 p-0">
+                                <div className="border-t border-gray-700 p-3">
+                                  <div className="mb-1 flex items-center justify-between text-xs text-gray-400">
+                                    <span>Notice — {posting.postingId}</span>
+                                    <a
+                                      href={noticeUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:text-blue-300"
+                                    >
+                                      open in new tab ↗
+                                    </a>
+                                  </div>
+                                  <iframe
+                                    title={`Notice ${posting.postingId}`}
+                                    src={noticeUrl}
+                                    className="h-[600px] w-full rounded border border-gray-700 bg-white"
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })
                   ) : (
@@ -1918,12 +1763,7 @@ Lela
                     className="rounded-full bg-gray-800 p-1 text-gray-400 transition hover:bg-gray-700 hover:text-white"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
@@ -1938,36 +1778,19 @@ Lela
                   <button
                     onClick={copyEmailToClipboard}
                     className={`flex items-center rounded px-3 py-1 text-xs font-medium ${
-                      emailCopied
-                        ? 'bg-green-700 text-white'
-                        : 'bg-blue-700 text-white hover:bg-blue-600'
+                      emailCopied ? 'bg-green-700 text-white' : 'bg-blue-700 text-white hover:bg-blue-600'
                     }`}
                   >
                     {emailCopied ? (
                       <>
-                        <svg
-                          className="mr-1 h-3 w-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
+                        <svg className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                         </svg>
                         Copied!
                       </>
                     ) : (
                       <>
-                        <svg
-                          className="mr-1 h-3 w-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
+                        <svg className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -1987,8 +1810,8 @@ Lela
 
                 <div className="mt-4 text-sm text-gray-500">
                   <p>
-                    Click the "Copy Email" button to copy this template to your clipboard. Then
-                    paste it into your email client to send.
+                    Click the "Copy Email" button to copy this template to your clipboard. Then paste it into your email
+                    client to send.
                   </p>
                 </div>
               </div>

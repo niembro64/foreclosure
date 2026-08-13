@@ -18,7 +18,9 @@ test('renders foreclosure data returned by the town-list request', async () => {
 
   expect(screen.getByRole('heading', { name: 'Connecticut Foreclosure Data' })).toBeInTheDocument();
   expect(await screen.findByText('Stamford (2)')).toBeInTheDocument();
+  expect(screen.getByLabelText('Approximate distance from Bronxville')).toHaveValue(25);
 
   fireEvent.click(screen.getByRole('button', { name: 'New Jersey' }));
   expect(screen.getByRole('heading', { name: 'Foreclosure Opportunity Monitor' })).toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Turn the CORS extension OFF for New Jersey');
 });

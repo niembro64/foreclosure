@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import axios from 'axios';
+import { DEFAULT_DISTANCE_MILES, getNewJerseyDistance } from '../data/bronxvilleDistances';
 import {
   CIVIL_VIEW_COUNTIES,
   CivilViewRecord,
@@ -17,8 +18,29 @@ type LoadProgress = {
   totalDetails: number;
 };
 
+type SortKey =
+  | 'status'
+  | 'county'
+  | 'distance'
+  | 'saleDate'
+  | 'case'
+  | 'address'
+  | 'upsetPrice'
+  | 'judgmentAmount'
+  | 'plaintiff'
+  | 'defendant'
+  | 'attorney'
+  | 'parcelNumber'
+  | 'sourceUpdatedAt';
+
+type SortDirection = 'ascending' | 'descending';
+
+type SortConfig = {
+  key: SortKey | null;
+  direction: SortDirection | null;
+};
+
 const DETAIL_BATCH_SIZE = 4;
-const CIVIL_VIEW_BASE_URL = 'https://salesweb.civilview.com';
 const CIVIL_VIEW_PROXY_URL = '/api/civilview';
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
@@ -42,6 +64,99 @@ const statusClassName = (status: string): string => {
 const parseSaleDate = (value: string): number => {
   const timestamp = new Date(value).getTime();
   return Number.isFinite(timestamp) ? timestamp : Number.MAX_SAFE_INTEGER;
+};
+
+const parseDollarAmount = (value: string): number | null => {
+  const amount = Number(value.replace(/[^0-9.-]/g, ''));
+  return value && Number.isFinite(amount) ? amount : null;
+};
+
+const getSortValue = (record: CivilViewRecord, key: SortKey): string | number | null => {
+  switch (key) {
+    case 'status':
+      return record.status.toLowerCase();
+    case 'county':
+      return record.county.toLowerCase();
+    case 'distance':
+      return getNewJerseyDistance(record.address, record.county)?.miles ?? null;
+    case 'saleDate':
+      return record.saleDate ? parseSaleDate(record.saleDate) : null;
+    case 'case':
+      return `${record.sheriffNumber} ${record.courtCaseNumber}`.trim().toLowerCase();
+    case 'address':
+      return record.address.toLowerCase();
+    case 'upsetPrice':
+      return record.upsetPrice ? record.upsetPriceNumber : null;
+    case 'judgmentAmount':
+      return parseDollarAmount(record.judgmentAmount || record.approximateAmountDue);
+    case 'plaintiff':
+      return record.plaintiff.toLowerCase();
+    case 'defendant':
+      return record.defendant.toLowerCase();
+    case 'attorney':
+      return record.attorney.toLowerCase();
+    case 'parcelNumber':
+      return record.parcelNumber.toLowerCase();
+    case 'sourceUpdatedAt':
+      return record.sourceUpdatedAt ? parseSaleDate(record.sourceUpdatedAt) : null;
+  }
+};
+
+export const sortCivilViewRecords = (records: CivilViewRecord[], config: SortConfig): CivilViewRecord[] => {
+  if (!config.key || !config.direction) {
+    return [...records].sort((a, b) => {
+      const dateDifference = parseSaleDate(a.saleDate) - parseSaleDate(b.saleDate);
+      return dateDifference || a.county.localeCompare(b.county) || a.address.localeCompare(b.address);
+    });
+  }
+
+  const direction = config.direction === 'ascending' ? 1 : -1;
+  return [...records].sort((a, b) => {
+    const aValue = getSortValue(a, config.key as SortKey);
+    const bValue = getSortValue(b, config.key as SortKey);
+
+    if (aValue === null || aValue === '') return bValue === null || bValue === '' ? 0 : 1;
+    if (bValue === null || bValue === '') return -1;
+    if (aValue < bValue) return -1 * direction;
+    if (aValue > bValue) return direction;
+    return parseSaleDate(a.saleDate) - parseSaleDate(b.saleDate) || a.address.localeCompare(b.address);
+  });
+};
+
+type SortableHeaderProps = {
+  label: string;
+  sortKey: SortKey;
+  sortConfig: SortConfig;
+  onSort: (key: SortKey) => void;
+  centered?: boolean;
+};
+
+const SortableHeader = ({ label, sortKey, sortConfig, onSort, centered = false }: SortableHeaderProps) => {
+  const active = sortConfig.key === sortKey;
+  const ariaSort = active ? (sortConfig.direction === 'ascending' ? 'ascending' : 'descending') : 'none';
+  const indicator = !active ? '↕' : sortConfig.direction === 'ascending' ? '↑' : '↓';
+
+  return (
+    <th
+      scope="col"
+      aria-sort={ariaSort}
+      className={`px-4 py-3 ${centered ? 'text-center' : 'text-left'} ${active ? 'bg-blue-950 text-blue-200' : ''}`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`group inline-flex w-full items-center gap-1.5 font-semibold uppercase hover:text-blue-200 ${
+          centered ? 'justify-center text-center' : 'justify-start text-left'
+        }`}
+        title={`Sort by ${label}`}
+      >
+        <span>{label}</span>
+        <span aria-hidden="true" className={active ? 'text-blue-300' : 'text-gray-600 group-hover:text-gray-400'}>
+          {indicator}
+        </span>
+      </button>
+    </th>
+  );
 };
 
 const loadCivilViewListingPage = async (
@@ -94,6 +209,8 @@ const NewJerseyForeclosures: React.FC = () => {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [countyFilter, setCountyFilter] = useState('all');
+  const [distanceFromBronxville, setDistanceFromBronxville] = useState(DEFAULT_DISTANCE_MILES);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
   const [progress, setProgress] = useState<LoadProgress>({
     county: '',
     countiesCompleted: 0,
@@ -106,6 +223,26 @@ const NewJerseyForeclosures: React.FC = () => {
     setSelectedCountyIds((current) =>
       current.includes(countyId) ? current.filter((id) => id !== countyId) : [...current, countyId]
     );
+  };
+
+  const requestSort = (key: SortKey) => {
+    if (sortConfig.key !== key) {
+      setSortConfig({ key, direction: 'ascending' });
+      return;
+    }
+    if (sortConfig.direction === 'ascending') {
+      setSortConfig({ key, direction: 'descending' });
+      return;
+    }
+    setSortConfig({ key: null, direction: null });
+  };
+
+  const resetFilters = () => {
+    setQuery('');
+    setCountyFilter('all');
+    setStatusFilter('all');
+    setDistanceFromBronxville(DEFAULT_DISTANCE_MILES);
+    setSortConfig({ key: null, direction: null });
   };
 
   const loadForeclosures = async () => {
@@ -190,7 +327,7 @@ const NewJerseyForeclosures: React.FC = () => {
         }
       } catch (error) {
         loadErrors.push(
-          `${county.name}: the CivilView bridge and direct request both failed. On a static host, enable the CORS extension for ${CIVIL_VIEW_BASE_URL}.`
+          `${county.name}: the CivilView bridge failed. Turn the CORS extension off and confirm ${CIVIL_VIEW_PROXY_URL} is available.`
         );
       }
 
@@ -219,9 +356,14 @@ const NewJerseyForeclosures: React.FC = () => {
 
   const filteredRecords = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return records
+    const matchingRecords = records
       .filter((record) => countyFilter === 'all' || record.county === countyFilter)
       .filter((record) => statusFilter === 'all' || record.status === statusFilter)
+      .filter(
+        (record) =>
+          (getNewJerseyDistance(record.address, record.county)?.miles ?? Number.POSITIVE_INFINITY) <=
+          distanceFromBronxville
+      )
       .filter((record) => {
         if (!normalizedQuery) return true;
         return [
@@ -233,18 +375,18 @@ const NewJerseyForeclosures: React.FC = () => {
           record.attorney,
           record.parcelNumber,
         ].some((value) => value.toLowerCase().includes(normalizedQuery));
-      })
-      .sort((a, b) => {
-        const dateDifference = parseSaleDate(a.saleDate) - parseSaleDate(b.saleDate);
-        return dateDifference || a.county.localeCompare(b.county);
       });
-  }, [countyFilter, query, records, statusFilter]);
+
+    return sortCivilViewRecords(matchingRecords, sortConfig);
+  }, [countyFilter, distanceFromBronxville, query, records, sortConfig, statusFilter]);
 
   const downloadCsv = () => {
     if (filteredRecords.length === 0) return;
 
     const headers = [
       'County',
+      'Approx. Distance from Bronxville (mi)',
+      'Distance Basis',
       'Property Match Key',
       'Status',
       'Sale Date',
@@ -267,30 +409,35 @@ const NewJerseyForeclosures: React.FC = () => {
       'Source Updated At',
       'Detail Load Status',
     ];
-    const rows = filteredRecords.map((record) => [
-      record.county,
-      record.matchKey,
-      record.status,
-      record.saleDate,
-      record.sheriffNumber,
-      record.courtCaseNumber,
-      record.address,
-      record.upsetPrice,
-      record.upsetPriceSource,
-      record.judgmentAmount,
-      record.approximateAmountDue,
-      record.plaintiff,
-      record.defendant,
-      record.attorney,
-      record.attorneyPhone,
-      record.parcelNumber,
-      record.propertyNote,
-      record.statusHistory.map((event) => `${event.date}: ${event.status}`).join(' | '),
-      record.detailUrl,
-      record.searchUrl,
-      record.sourceUpdatedAt,
-      record.detailStatus,
-    ]);
+    const rows = filteredRecords.map((record) => {
+      const distance = getNewJerseyDistance(record.address, record.county);
+      return [
+        record.county,
+        distance?.miles ?? '',
+        distance?.basis ?? '',
+        record.matchKey,
+        record.status,
+        record.saleDate,
+        record.sheriffNumber,
+        record.courtCaseNumber,
+        record.address,
+        record.upsetPrice,
+        record.upsetPriceSource,
+        record.judgmentAmount,
+        record.approximateAmountDue,
+        record.plaintiff,
+        record.defendant,
+        record.attorney,
+        record.attorneyPhone,
+        record.parcelNumber,
+        record.propertyNote,
+        record.statusHistory.map((event) => `${event.date}: ${event.status}`).join(' | '),
+        record.detailUrl,
+        record.searchUrl,
+        record.sourceUpdatedAt,
+        record.detailStatus,
+      ];
+    });
     const csv = [headers, ...rows].map((row) => row.map((value) => escapeCsvField(value)).join(',')).join('\n');
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
     const link = document.createElement('a');
@@ -337,6 +484,27 @@ const NewJerseyForeclosures: React.FC = () => {
             {fetchedAt && <p className="text-xs text-gray-500">Fetched {fetchedAt}</p>}
           </div>
         </header>
+
+        <section
+          role="alert"
+          className="mb-6 rounded-xl border-2 border-amber-500 bg-amber-950/70 p-4 text-amber-100 shadow-lg shadow-amber-950/20"
+        >
+          <div className="flex items-start gap-3">
+            <span aria-hidden="true" className="text-2xl leading-none">
+              ⚠
+            </span>
+            <div>
+              <h2 className="text-base font-bold uppercase tracking-wide">
+                Turn the CORS extension OFF for New Jersey
+              </h2>
+              <p className="mt-1 text-sm text-amber-200">
+                New Jersey detail pages use the app&apos;s same-origin session bridge. A CORS extension can rewrite that
+                response and prevent upset prices from loading. Connecticut is the reverse: turn the extension back ON
+                before using the Connecticut screen.
+              </p>
+            </div>
+          </div>
+        </section>
 
         <section className="mb-6 rounded-xl border border-gray-700 bg-gray-800 p-5">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
@@ -401,10 +569,10 @@ const NewJerseyForeclosures: React.FC = () => {
             })}
           </div>
 
-          <div className="mt-4 rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-200">
-            The local dev server and supported deployments use a same-origin CivilView bridge for detail sessions. The
-            CORS extension is the listing-only fallback. If upset prices show “detail blocked,” restart the dev server
-            after updating, or use the session-aware Details action.
+          <div className="mt-4 rounded-lg border border-gray-600 bg-gray-900/70 p-3 text-xs text-gray-300">
+            CivilView detail enrichment requires the same-origin bridge. If upset prices show “detail blocked,” confirm
+            the CORS extension is off and restart the local dev server after updating. The Details action remains
+            available as a manual fallback.
           </div>
         </section>
 
@@ -443,9 +611,10 @@ const NewJerseyForeclosures: React.FC = () => {
 
         {records.length > 0 && (
           <>
-            <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
-                ['Open-list records', records.length, 'text-white'],
+                ['Listings loaded', records.length, 'text-white'],
+                ['Visible records', filteredRecords.length, 'text-violet-300'],
                 ['Details loaded', detailLoaded, 'text-blue-300'],
                 ['Upset prices found', upsetPricesFound, 'text-emerald-300'],
                 ['Detail errors', detailErrors, 'text-red-300'],
@@ -457,67 +626,140 @@ const NewJerseyForeclosures: React.FC = () => {
               ))}
             </section>
 
-            <section className="mb-4 flex flex-wrap gap-3 rounded-xl border border-gray-700 bg-gray-800 p-4">
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search address, party, case, attorney…"
-                className="min-w-[280px] flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-              />
-              <select
-                value={countyFilter}
-                onChange={(event) => setCountyFilter(event.target.value)}
-                className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white"
-                aria-label="Filter by county"
-              >
-                <option value="all">All counties</option>
-                {CIVIL_VIEW_COUNTIES.map((county) => (
-                  <option key={county.id} value={county.name}>
-                    {county.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white"
-                aria-label="Filter by status"
-              >
-                <option value="all">All statuses</option>
-                {statuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
+            <section className="mb-4 rounded-xl border border-gray-700 bg-gray-800 p-4">
+              <div className="flex flex-wrap gap-3">
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search address, party, case, attorney…"
+                  aria-label="Search New Jersey foreclosure records"
+                  className="min-w-[280px] flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+                <select
+                  value={countyFilter}
+                  onChange={(event) => setCountyFilter(event.target.value)}
+                  className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white"
+                  aria-label="Filter by county"
+                >
+                  <option value="all">All counties</option>
+                  {CIVIL_VIEW_COUNTIES.map((county) => (
+                    <option key={county.id} value={county.name}>
+                      {county.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                  className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white"
+                  aria-label="Filter by status"
+                >
+                  <option value="all">All statuses</option>
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <label className="flex items-center gap-2 rounded-lg border border-gray-600 bg-gray-900 px-3 py-1 text-sm text-gray-300">
+                  <span>Within</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="250"
+                    value={distanceFromBronxville}
+                    onChange={(event) => setDistanceFromBronxville(Math.max(0, Number(event.target.value)))}
+                    aria-label="Approximate distance from Bronxville"
+                    className="w-16 bg-transparent py-1 text-right font-semibold text-white outline-none"
+                  />
+                  <span>mi of Bronxville</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold text-gray-200 hover:bg-gray-700"
+                >
+                  Reset filters
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+                <span>
+                  Showing {filteredRecords.length} of {records.length} listings. Distances are straight-line estimates
+                  from Bronxville using the property ZIP centroid when available.
+                </span>
+                <span>Click a column heading to sort ascending, descending, or reset.</span>
+              </div>
             </section>
 
             <section className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800">
-              <table className="min-w-[1700px] divide-y divide-gray-700 text-left text-sm">
-                <thead className="bg-gray-950 text-xs uppercase tracking-wide text-gray-400">
+              <table className="min-w-[1850px] divide-y divide-gray-700 text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-gray-950 text-xs uppercase tracking-wide text-gray-400">
                   <tr>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">County</th>
-                    <th className="px-4 py-3">Sale date</th>
-                    <th className="px-4 py-3">Sheriff / case</th>
-                    <th className="px-4 py-3">Property</th>
-                    <th className="px-4 py-3">Upset price</th>
-                    <th className="px-4 py-3">Judgment / approx.</th>
-                    <th className="px-4 py-3">Plaintiff</th>
-                    <th className="px-4 py-3">Defendant / borrower</th>
-                    <th className="px-4 py-3">Attorney</th>
-                    <th className="px-4 py-3">Parcel</th>
-                    <th className="px-4 py-3">Source</th>
+                    <SortableHeader
+                      label="Status"
+                      sortKey="status"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                      centered
+                    />
+                    <SortableHeader label="County" sortKey="county" sortConfig={sortConfig} onSort={requestSort} />
+                    <SortableHeader label="Distance" sortKey="distance" sortConfig={sortConfig} onSort={requestSort} />
+                    <SortableHeader label="Sale date" sortKey="saleDate" sortConfig={sortConfig} onSort={requestSort} />
+                    <SortableHeader
+                      label="Sheriff / case"
+                      sortKey="case"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
+                    <SortableHeader label="Property" sortKey="address" sortConfig={sortConfig} onSort={requestSort} />
+                    <SortableHeader
+                      label="Upset price"
+                      sortKey="upsetPrice"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
+                    <SortableHeader
+                      label="Judgment / approx."
+                      sortKey="judgmentAmount"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
+                    <SortableHeader
+                      label="Plaintiff"
+                      sortKey="plaintiff"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
+                    <SortableHeader
+                      label="Defendant / borrower"
+                      sortKey="defendant"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
+                    <SortableHeader label="Attorney" sortKey="attorney" sortConfig={sortConfig} onSort={requestSort} />
+                    <SortableHeader
+                      label="Parcel"
+                      sortKey="parcelNumber"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
+                    <SortableHeader
+                      label="Source"
+                      sortKey="sourceUpdatedAt"
+                      sortConfig={sortConfig}
+                      onSort={requestSort}
+                    />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
                   {filteredRecords.map((record) => {
                     const research = createPropertyResearchLinks(record.address);
+                    const distance = getNewJerseyDistance(record.address, record.county);
                     return (
                       <tr key={record.id} className="align-top hover:bg-gray-700/50">
-                        <td className="px-4 py-4">
+                        <td className="w-[180px] px-4 py-4 text-center">
                           <span
-                            className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${statusClassName(
+                            className={`inline-flex max-w-[160px] items-center justify-center whitespace-normal rounded-full border px-2 py-1 text-center text-xs font-semibold leading-tight ${statusClassName(
                               record.status
                             )}`}
                           >
@@ -527,10 +769,19 @@ const NewJerseyForeclosures: React.FC = () => {
                             <span className="mt-2 block text-xs text-blue-300">Loading detail…</span>
                           )}
                           {record.detailStatus === 'error' && (
-                            <span className="mt-2 block max-w-[150px] text-xs text-red-300">Detail blocked</span>
+                            <span className="mt-2 block text-center text-xs text-red-300">Detail blocked</span>
                           )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-4 font-semibold text-white">{record.county}</td>
+                        <td className="whitespace-nowrap px-4 py-4 text-gray-300">
+                          {distance ? (
+                            <span title={`Straight-line estimate using ${distance.basis} centroid`}>
+                              ~{distance.miles} mi
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
                         <td className="whitespace-nowrap px-4 py-4 text-gray-200">{record.saleDate || '—'}</td>
                         <td className="px-4 py-4">
                           <p className="font-semibold text-gray-100">{record.sheriffNumber || '—'}</p>

@@ -31,10 +31,19 @@ The New Jersey workflow first uses the narrowly scoped same-origin bridge at
 it. The Cloudflare Pages deployment equivalent lives in
 `functions/api/civilview.ts`. Both proxy only the four configured county IDs and
 numeric property IDs while maintaining CivilView's county-specific ASP.NET
-sessions. On static hosts without backend support, New Jersey falls back to
-direct browser requests through the CORS extension for listing data only.
-CivilView detail enrichment requires the bridge; the direct Details action is
-available as a manual fallback.
+sessions. Turn the CORS extension **off** for New Jersey because it can rewrite
+the same-origin bridge response. CivilView detail enrichment requires the
+bridge; the direct Details action is available as a manual fallback.
+
+## Distance estimates
+
+Both state screens default to properties within approximately 25 straight-line
+miles of Bronxville, NY. Connecticut uses town internal points. New Jersey uses
+the property's ZIP Code Tabulation Area internal point when the listing contains
+a ZIP code and falls back to the county internal point. The built-in reference
+values were calculated from the U.S. Census Bureau's 2025 Gazetteer files, so
+they are useful proximity estimates rather than driving distances or parcel-level
+geocodes.
 
 ## Data-source boundaries
 
