@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ForeclosurePageHeader from '../components/ForeclosurePageHeader';
 import { DEFAULT_DISTANCE_MILES, getConnecticutDistance } from '../data/bronxvilleDistances';
 
 const findNumbersAndMakePhoneNumber = (str: string): string => {
@@ -968,42 +969,15 @@ Lela
   };
 
   return (
-    <div className="h-auto bg-gray-900 p-4 text-gray-100">
-      <div className="mb-4 p-4">
-        <a href="https://niemo.io" className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-600">
-          niemo.io
-        </a>
-      </div>
-      <div className="w-full py-8">
-        <header className="mb-6 text-center">
-          <h1 className="mb-2 mb-8 text-3xl font-bold text-blue-300">Connecticut Foreclosure Data</h1>
-
-          <a
-            href="https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostbyTownList.aspx"
-            className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-600"
-          >
-            sso.eservices.jud.ct.gov
-          </a>
-        </header>
-
-        <div className="mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-gray-300">
-                Data fetched at: <span className="font-semibold">{timestamp}</span>
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={fetchCityList}
-                className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
-                disabled={fetchingCities}
-              >
-                Refresh City List
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-900 p-4 text-gray-100">
+      <div className="mx-auto max-w-[1800px] py-8">
+        <ForeclosurePageHeader
+          title="Connecticut Foreclosure Data"
+          description="Browse pending Connecticut foreclosure sales by town, approximate distance from Bronxville, and auction details."
+          sourceHref="https://sso.eservices.jud.ct.gov/foreclosures/Public/PendPostbyTownList.aspx"
+          sourceLabel="Connecticut Judicial Branch"
+          fetchedAt={timestamp}
+        />
 
         {error && (
           <div className="mb-6 rounded-lg bg-red-900 p-4 text-red-200">
@@ -1193,35 +1167,43 @@ Lela
 
         {/* City Selection Section */}
         <div className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-blue-300">Connecticut Cities with Foreclosure Data</h2>
-            <p className="text-sm text-gray-400">
-              {cityList.length} cities found - select cities and click "Process" to fetch foreclosure data
-            </p>
-          </div>
-
-          <div className="mb-4 flex flex-wrap gap-2">
-            <button
-              onClick={processSelectedCities}
-              className="rounded bg-green-600 px-4 py-2 text-white transition hover:bg-green-500"
-              disabled={fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0}
-            >
-              Process Selected Cities ({selectedCities.length})
-            </button>
-            <button
-              onClick={selectAllCities}
-              className="rounded bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600"
-              disabled={fetchingCities || fetchingPostings || fetchingDetails || cityList.length === 0}
-            >
-              Select All Cities
-            </button>
-            <button
-              onClick={clearCitySelection}
-              className="rounded bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600"
-              disabled={fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0}
-            >
-              Clear Selection
-            </button>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-blue-300">Connecticut Cities with Foreclosure Data</h2>
+              <p className="text-sm text-gray-400">
+                {cityList.length} cities found - select cities and click "Process" to fetch foreclosure data
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={processSelectedCities}
+                className="rounded bg-green-600 px-4 py-2 text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0}
+              >
+                Process Selected Cities ({selectedCities.length})
+              </button>
+              <button
+                onClick={fetchCityList}
+                className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={fetchingCities || fetchingPostings || fetchingDetails}
+              >
+                Refresh City List
+              </button>
+              <button
+                onClick={selectAllCities}
+                className="rounded bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={fetchingCities || fetchingPostings || fetchingDetails || cityList.length === 0}
+              >
+                Select All Cities
+              </button>
+              <button
+                onClick={clearCitySelection}
+                className="rounded bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={fetchingCities || fetchingPostings || fetchingDetails || selectedCities.length === 0}
+              >
+                Clear Selection
+              </button>
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-lg border border-gray-700">

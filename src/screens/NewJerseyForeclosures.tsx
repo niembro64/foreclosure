@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import axios from 'axios';
+import ForeclosurePageHeader from '../components/ForeclosurePageHeader';
 import { DEFAULT_DISTANCE_MILES, getNewJerseyDistance } from '../data/bronxvilleDistances';
 import {
   CIVIL_VIEW_COUNTIES,
@@ -326,9 +327,7 @@ const NewJerseyForeclosures: React.FC = () => {
           }
         }
       } catch (error) {
-        loadErrors.push(
-          `${county.name}: the CivilView bridge failed. Confirm ${CIVIL_VIEW_PROXY_URL} is available.`
-        );
+        loadErrors.push(`${county.name}: the CivilView bridge failed. Confirm ${CIVIL_VIEW_PROXY_URL} is available.`);
       }
 
       setProgress((current) => ({
@@ -468,37 +467,29 @@ const NewJerseyForeclosures: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 text-gray-100">
-      <div className="mx-auto max-w-[1800px] py-6">
-        <header className="mb-8">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400">
-            New Jersey sheriff sales
-          </p>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Foreclosure Opportunity Monitor</h1>
-              <p className="mt-2 max-w-3xl text-sm text-gray-400">
-                Open CivilView sales from Essex, Passaic, Hudson, and Union counties, enriched from each property detail
-                page with upset price, status history, case, attorney, and parcel information.
-              </p>
-            </div>
-            {fetchedAt && <p className="text-xs text-gray-500">Fetched {fetchedAt}</p>}
-          </div>
-        </header>
+      <div className="mx-auto max-w-[1800px] py-8">
+        <ForeclosurePageHeader
+          title="New Jersey Foreclosure Data"
+          description="Browse open CivilView sheriff sales from Essex, Passaic, Hudson, and Union counties, enriched with upset prices and property details."
+          sourceHref={getCivilViewSearchUrl(10)}
+          sourceLabel="CivilView sheriff sales"
+          fetchedAt={fetchedAt}
+        />
 
-        <section className="mb-6 rounded-xl border border-gray-700 bg-gray-800 p-5">
+        <section className="mb-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-white">Counties</h2>
-              <p className="mt-1 text-sm text-gray-400">
-                CivilView returns currently open listings. Choose a smaller set for a faster run.
-              </p>
+              <h2 className="text-lg font-semibold text-blue-300 sm:text-xl">
+                New Jersey Counties with Foreclosure Data
+              </h2>
+              <p className="text-sm text-gray-400">Select counties and load their currently open CivilView listings.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={loadForeclosures}
                 disabled={isLoading || selectedCountyIds.length === 0}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? 'Loading county data…' : `Load listings (${selectedCountyIds.length})`}
               </button>
@@ -506,57 +497,61 @@ const NewJerseyForeclosures: React.FC = () => {
                 type="button"
                 onClick={downloadCsv}
                 disabled={filteredRecords.length === 0}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Export {filteredRecords.length || ''} CSV
               </button>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {CIVIL_VIEW_COUNTIES.map((county) => {
-              const selected = selectedCountyIds.includes(county.id);
-              return (
-                <label
-                  key={county.id}
-                  className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition ${
-                    selected
-                      ? 'border-emerald-500 bg-emerald-950/50 text-emerald-100'
-                      : 'border-gray-600 bg-gray-900 text-gray-400'
-                  }`}
-                >
-                  <span>
-                    <span className="block font-semibold">{county.name} County</span>
-                    <a
-                      href={getCivilViewSearchUrl(county.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(event) => event.stopPropagation()}
-                      className="text-xs text-blue-400 hover:text-blue-300"
-                    >
-                      Open source ↗
-                    </a>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={() => toggleCounty(county.id)}
-                    className="h-5 w-5 accent-emerald-500"
-                  />
-                </label>
-              );
-            })}
-          </div>
+          <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {CIVIL_VIEW_COUNTIES.map((county) => {
+                const selected = selectedCountyIds.includes(county.id);
+                return (
+                  <label
+                    key={county.id}
+                    className={`flex cursor-pointer items-center justify-between rounded-lg p-3 transition ${
+                      selected
+                        ? 'bg-blue-700 text-blue-100 hover:bg-blue-600'
+                        : 'bg-gray-700 text-gray-100 hover:bg-gray-600'
+                    }`}
+                  >
+                    <span>
+                      <span className="block font-semibold">{county.name} County</span>
+                      <a
+                        href={getCivilViewSearchUrl(county.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                        className={
+                          selected ? 'text-xs text-blue-100 underline' : 'text-xs text-blue-300 hover:text-blue-200'
+                        }
+                      >
+                        Open source ↗
+                      </a>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => toggleCounty(county.id)}
+                      className="h-5 w-5 accent-blue-500"
+                    />
+                  </label>
+                );
+              })}
+            </div>
 
-          <div className="mt-4 rounded-lg border border-gray-600 bg-gray-900/70 p-3 text-xs text-gray-300">
-            CivilView detail enrichment requires the same-origin bridge. If upset prices show “detail blocked,” confirm
-            the bridge is available and restart the local dev server after updating. The Details action remains available
-            as a manual fallback.
+            <div className="mt-4 rounded bg-gray-700 p-3 text-xs leading-5 text-gray-300">
+              CivilView detail enrichment requires the same-origin bridge. If upset prices show “detail blocked,”
+              confirm the bridge is available and restart the local dev server after updating. The Details action
+              remains available as a manual fallback.
+            </div>
           </div>
         </section>
 
         {isLoading && (
-          <section className="mb-6 rounded-xl border border-blue-800 bg-blue-950/40 p-4">
+          <section className="mb-6 rounded-lg bg-gray-800 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <span className="font-semibold text-blue-200">Loading {progress.county} County</span>
               <span className="text-blue-300">
@@ -578,7 +573,7 @@ const NewJerseyForeclosures: React.FC = () => {
         )}
 
         {errors.length > 0 && (
-          <section className="mb-6 rounded-xl border border-red-800 bg-red-950/40 p-4 text-sm text-red-200">
+          <section className="mb-6 rounded-lg bg-red-900 p-4 text-sm text-red-200">
             <h2 className="mb-2 font-semibold">Run notes</h2>
             <ul className="list-disc space-y-1 pl-5">
               {errors.map((error) => (
@@ -590,34 +585,37 @@ const NewJerseyForeclosures: React.FC = () => {
 
         {records.length > 0 && (
           <>
-            <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {[
-                ['Listings loaded', records.length, 'text-white'],
-                ['Visible records', filteredRecords.length, 'text-violet-300'],
-                ['Details loaded', detailLoaded, 'text-blue-300'],
-                ['Upset prices found', upsetPricesFound, 'text-emerald-300'],
-                ['Detail errors', detailErrors, 'text-red-300'],
-              ].map(([label, value, color]) => (
-                <div key={label} className="rounded-xl border border-gray-700 bg-gray-800 p-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-                  <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
-                </div>
-              ))}
+            <section className="mb-6 rounded-lg bg-gray-800 p-4">
+              <h2 className="mb-3 text-lg font-semibold text-blue-300">Foreclosure Data Summary</h2>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                {[
+                  ['Listings loaded', records.length, 'text-white'],
+                  ['Visible records', filteredRecords.length, 'text-violet-300'],
+                  ['Details loaded', detailLoaded, 'text-blue-300'],
+                  ['Upset prices found', upsetPricesFound, 'text-green-400'],
+                  ['Detail errors', detailErrors, 'text-red-400'],
+                ].map(([label, value, color]) => (
+                  <div key={label} className="rounded bg-gray-700 p-4">
+                    <p className="text-xs text-gray-500">{label}</p>
+                    <p className={`mt-1 text-xl font-bold ${color}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
             </section>
 
-            <section className="mb-4 rounded-xl border border-gray-700 bg-gray-800 p-4">
+            <section className="mb-4 rounded-lg bg-gray-800 p-4">
               <div className="flex flex-wrap gap-3">
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search address, party, case, attorney…"
                   aria-label="Search New Jersey foreclosure records"
-                  className="min-w-[280px] flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  className="min-w-[280px] flex-1 rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                 />
                 <select
                   value={countyFilter}
                   onChange={(event) => setCountyFilter(event.target.value)}
-                  className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white"
                   aria-label="Filter by county"
                 >
                   <option value="all">All counties</option>
@@ -630,7 +628,7 @@ const NewJerseyForeclosures: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
-                  className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white"
                   aria-label="Filter by status"
                 >
                   <option value="all">All statuses</option>
@@ -640,7 +638,7 @@ const NewJerseyForeclosures: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <label className="flex items-center gap-2 rounded-lg border border-gray-600 bg-gray-900 px-3 py-1 text-sm text-gray-300">
+                <label className="flex items-center gap-2 rounded border border-gray-600 bg-gray-700 px-3 py-1 text-sm text-gray-300">
                   <span>Within</span>
                   <input
                     type="number"
@@ -656,7 +654,7 @@ const NewJerseyForeclosures: React.FC = () => {
                 <button
                   type="button"
                   onClick={resetFilters}
-                  className="rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold text-gray-200 hover:bg-gray-700"
+                  className="rounded bg-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 transition hover:bg-gray-600"
                 >
                   Reset filters
                 </button>
@@ -670,9 +668,9 @@ const NewJerseyForeclosures: React.FC = () => {
               </div>
             </section>
 
-            <section className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800">
+            <section className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-800">
               <table className="min-w-[1850px] divide-y divide-gray-700 text-left text-sm">
-                <thead className="sticky top-0 z-10 bg-gray-950 text-xs uppercase tracking-wide text-gray-400">
+                <thead className="sticky top-0 z-10 bg-gray-800 text-xs uppercase tracking-wide text-gray-300">
                   <tr>
                     <SortableHeader
                       label="Status"
@@ -730,7 +728,7 @@ const NewJerseyForeclosures: React.FC = () => {
                     />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-gray-700 bg-gray-800">
                   {filteredRecords.map((record) => {
                     const research = createPropertyResearchLinks(record.address);
                     const distance = getNewJerseyDistance(record.address, record.county);
@@ -851,41 +849,45 @@ const NewJerseyForeclosures: React.FC = () => {
           </>
         )}
 
-        <section className="mt-8 rounded-xl border border-gray-700 bg-gray-800 p-5">
-          <h2 className="text-lg font-semibold text-white">Additional source roadmap</h2>
-          <p className="mt-2 max-w-4xl text-sm text-gray-400">
-            The law-firm sites are retained as manual research sources for now. Gross Polowy and Friedman Vartolo
-            require acceptance of terms that restrict copying or downloading; LOGS embeds a Power BI report. Automated
-            valuation capture from Zillow, Realtor, Redfin, and Homes also needs licensed APIs or a permitted data
-            provider. Each property row includes targeted research links without copying restricted content.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3 text-sm">
-            <a
-              href="https://grosspolowy.com/resources/sales-search-page/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded border border-gray-600 px-3 py-2 text-blue-300 hover:bg-gray-700"
-            >
-              Gross Polowy ↗
-            </a>
-            <a
-              href="https://www.logs.com/ny-sales-report.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded border border-gray-600 px-3 py-2 text-blue-300 hover:bg-gray-700"
-            >
-              LOGS Group ↗
-            </a>
-            <a
-              href="https://friedmanvartolo.com/sales/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded border border-gray-600 px-3 py-2 text-blue-300 hover:bg-gray-700"
-            >
-              Friedman Vartolo ↗
-            </a>
+        <details className="group mt-8 rounded-lg bg-gray-800 p-4">
+          <summary className="cursor-pointer text-lg font-semibold text-blue-300 marker:text-gray-500 hover:text-blue-200">
+            Additional Research Sources
+          </summary>
+          <div className="mt-4 border-t border-gray-700 pt-4">
+            <p className="max-w-4xl text-sm leading-6 text-gray-400">
+              The law-firm sites are retained as manual research sources for now. Gross Polowy and Friedman Vortolo
+              require acceptance of terms that restrict copying or downloading; LOGS embeds a Power BI report. Automated
+              valuation capture from Zillow, Realtor, Redfin, and Homes also needs licensed APIs or a permitted data
+              provider. Each property row includes targeted research links without copying restricted content.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3 text-sm">
+              <a
+                href="https://grosspolowy.com/resources/sales-search-page/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded bg-gray-700 px-3 py-2 text-blue-300 transition hover:bg-gray-600"
+              >
+                Gross Polowy ↗
+              </a>
+              <a
+                href="https://www.logs.com/ny-sales-report.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded bg-gray-700 px-3 py-2 text-blue-300 transition hover:bg-gray-600"
+              >
+                LOGS Group ↗
+              </a>
+              <a
+                href="https://friedmanvartolo.com/sales/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded bg-gray-700 px-3 py-2 text-blue-300 transition hover:bg-gray-600"
+              >
+                Friedman Vartolo ↗
+              </a>
+            </div>
           </div>
-        </section>
+        </details>
       </div>
     </div>
   );
