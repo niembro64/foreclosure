@@ -64,11 +64,12 @@ Set `WEB_GAMES_BACKEND_ORIGIN` to point the dev proxy somewhere else. Verify a
 deployment before opening the NJ screen:
 
 ```sh
-curl -i https://games.niemo.io/api/health
-curl -I 'https://games.niemo.io/api/civilview?countyId=10'
+curl -sD - -o /dev/null https://games.niemo.io/api/health
+curl -sD - -o /dev/null 'https://games.niemo.io/api/civilview?countyId=10'
 ```
 
-Both responses must be HTTP 200 and include `X-CivilView-Proxy: 1`.
+Both responses must be HTTP 200 and include `X-CivilView-Proxy: 1`. Use GET,
+not `curl -I` — these routes answer GET only, so a HEAD returns 405.
 
 ## Distance estimates
 
