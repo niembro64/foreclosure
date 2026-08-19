@@ -28,7 +28,6 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "serve": "node server/index.js",
     "test": "react-scripts test",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"

@@ -26,32 +26,42 @@ CORS-disabling extension (e.g.
 and toggle it on before using Connecticut data.
 
 The New Jersey workflow first uses the narrowly scoped same-origin bridge at
-`/api/civilview`. `npm start` automatically installs the local bridge through
-`src/setupProxy.js`; restart the dev server after pulling changes so CRA loads
-it. `npm run serve` provides the production bridge and serves the compiled app.
-The Cloudflare Pages deployment equivalent lives in `functions/api/civilview.ts`.
-All implementations proxy only the four configured county IDs and numeric
-property IDs while maintaining CivilView's county-specific ASP.NET sessions.
-CivilView detail enrichment requires the bridge; the direct Details action is
-available as a manual fallback.
+`/api/civilview`. That bridge is **not part of this repo** — it lives in
+[web_games_backend](https://github.com/niembro64/web_games_backend), the single
+backend behind games.niemo.io. In production nginx routes `/api/` to it; in
+development `src/setupProxy.js` forwards the same paths to a local checkout of
+it (see Production server below). The Cloudflare Pages deployment equivalent
+lives in `functions/api/civilview.ts`. All implementations proxy only the four
+configured county IDs and numeric property IDs while maintaining CivilView's
+county-specific ASP.NET sessions. CivilView detail enrichment requires the
+bridge; the direct Details action is available as a manual fallback.
 
 ## Production server
 
-Uploading `build/` to a static web root is not sufficient for New Jersey. The
-compiled files contain browser code only, while CivilView detail pages require a
-server-side ASP.NET session. Build and start the included production server:
+This repo builds to static files only. Uploading `build/` to a static web root
+covers Connecticut, but **not** New Jersey: the compiled files are browser code,
+while CivilView detail pages require a server-side ASP.NET session.
+
+That server-side half is
+[web_games_backend](https://github.com/niembro64/web_games_backend). Deploy it
+once for the whole domain — it also carries the lobby directory for the games on
+games.niemo.io — and this app needs nothing but its static build:
 
 ```sh
 npm ci
-npm run build
-npm run serve
+npm run build          # compile into ./build
+# then publish ./build to /var/www/games.niemo.io/foreclosure/
 ```
 
-It listens on `127.0.0.1:3001` by default. Set `FORECLOSURE_HOST` or
-`FORECLOSURE_PORT` to override those values. Route `/api/` from nginx to that
-process using `deploy/nginx-foreclosure.conf.example`; the existing static
-`/foreclosure/` location can remain unchanged. Verify the deployed bridge before
-opening the NJ screen:
+For local development, run the backend next to the dev server:
+
+```sh
+cd ../web_games_backend && npm start   # 127.0.0.1:3001
+cd ../foreclosure && npm start         # forwards /api/ to it
+```
+
+Set `WEB_GAMES_BACKEND_ORIGIN` to point the dev proxy somewhere else. Verify a
+deployment before opening the NJ screen:
 
 ```sh
 curl -i https://games.niemo.io/api/health
@@ -83,8 +93,8 @@ links without copying third-party valuation content.
 
 ```
 npm start       # dev server — opens at http://localhost:3000/foreclosure
+                # forwards /api/ to web_games_backend on 127.0.0.1:3001
 npm run build   # compile the production app into ./build
-npm run serve   # serve ./build plus the NJ bridge on 127.0.0.1:3001
 npm test        # run tests
 npm run typecheck
 npm run format  # prettier
